@@ -1,0 +1,967 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>진동 실험실</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/mathjs@13.2.0/lib/browser/math.js"></script>
+<style>
+:root{
+  --ground:#EEF1EF; --panel:#FFFFFF; --panel2:#F6F8F7; --ink:#15201C; --ink2:#51605A; --line:#D3DBD7;
+  --accent:#0A6E62; --accent-ink:#FFFFFF; --accent-soft:#DCEFEB;
+  --s1:#2459C9; --s2:#C8364B; --s3:#C98A00; --base:#6B7A74;
+  --grid:#E3E9E6; --err:#B42318; --err-soft:#FDECEA; --warn:#8A5A00;
+  --stage:#F8FAF9; --hatch:#9AA8A2;
+  --sans:"IBM Plex Sans KR", "Apple SD Gothic Neo", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0E1412; --panel:#161E1B; --panel2:#1B2521; --ink:#E4ECE8; --ink2:#98A8A1; --line:#2C3834;
+    --accent:#3FC1AD; --accent-ink:#06201B; --accent-soft:#16332E;
+    --s1:#6F9BFF; --s2:#FF7A8C; --s3:#F2C14E; --base:#8C9B95;
+    --grid:#222D29; --err:#FF8A80; --err-soft:#3A1E1C; --warn:#F2C14E;
+    --stage:#121A17; --hatch:#56645E;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0E1412; --panel:#161E1B; --panel2:#1B2521; --ink:#E4ECE8; --ink2:#98A8A1; --line:#2C3834;
+  --accent:#3FC1AD; --accent-ink:#06201B; --accent-soft:#16332E;
+  --s1:#6F9BFF; --s2:#FF7A8C; --s3:#F2C14E; --base:#8C9B95;
+  --grid:#222D29; --err:#FF8A80; --err-soft:#3A1E1C; --warn:#F2C14E;
+  --stage:#121A17; --hatch:#56645E;
+}
+*{box-sizing:border-box}
+html,body{background:var(--ground)}
+body{color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.45;padding-inline:16px;padding-block:12px 28px;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+.app{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:minmax(330px,390px) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:900px){.app{grid-template-columns:minmax(0,1fr)}}
+header.top{max-width:1400px;margin:0 auto 10px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+header.top h1{font-size:22px;margin:0;font-weight:600;letter-spacing:-.01em}
+header.top .sub{color:var(--ink2);font-size:13px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+.col{display:flex;flex-direction:column;gap:12px;min-width:0}
+.label{font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);margin:0 0 8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+select,input[type=number]{background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:8px 10px;min-height:40px}
+select{width:100%}
+textarea#eq{width:100%;min-height:118px;resize:vertical;font-family:var(--mono);font-size:16px;line-height:1.6;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;white-space:pre;overflow-x:auto}
+textarea#eq:focus,select:focus,input:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.keys{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;margin-top:8px}
+.keys button{min-height:40px;border:1px solid var(--line);background:var(--panel2);border-radius:7px;font-family:var(--mono);font-size:14px;padding:0;touch-action:manipulation}
+.keys button:active{background:var(--accent-soft)}
+.keys button.wide{grid-column:span 2}
+.msg{font-size:13px;margin-top:8px;padding:8px 10px;border-radius:7px;background:var(--accent-soft);color:var(--ink)}
+.msg.err{background:var(--err-soft);color:var(--err)}
+.hint{font-size:12.5px;color:var(--ink2);margin-top:8px}
+.hint code{font-family:var(--mono);font-size:12px;background:var(--panel2);padding:1px 4px;border-radius:4px}
+details.help summary{cursor:pointer;font-size:13px;color:var(--accent);margin-top:8px}
+details.help ul{margin:6px 0 0;padding-left:18px;font-size:13px;color:var(--ink2)}
+.ics{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px 8px;align-items:center}
+.ics .h{font-size:12px;color:var(--ink2);font-family:var(--mono)}
+.ics input{width:100%;font-family:var(--mono)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.row2 label{font-size:12px;color:var(--ink2);display:flex;flex-direction:column;gap:3px}
+.params{display:flex;flex-direction:column;gap:10px}
+.prm{display:grid;grid-template-columns:56px 1fr 84px;gap:8px;align-items:center}
+.prm .nm{font-family:var(--mono);font-weight:600;font-size:15px;overflow:hidden;text-overflow:ellipsis}
+.prm input[type=number]{width:100%;font-family:var(--mono);padding:6px 8px;min-height:36px}
+.prm .rng{grid-column:2 / 4;display:flex;gap:6px;font-size:11px;color:var(--ink2);font-family:var(--mono);margin-top:-6px}
+.prm .rng input{width:70px;min-height:26px;padding:2px 6px;font-size:11px}
+input[type=range]{width:100%;accent-color:var(--accent);height:32px}
+.eqdisp{font-family:var(--mono);font-size:clamp(14px,1.7vw,19px);line-height:1.7;overflow-x:auto;white-space:nowrap;padding:2px 2px 8px;border-bottom:1px solid var(--line);margin-bottom:10px}
+.eqdisp .d{color:var(--ink2)}
+.stagewrap{position:relative}
+canvas{display:block;width:100%;touch-action:pan-y}
+#stage{height:270px;border-radius:8px;background:var(--stage)}
+#stage.big{height:min(480px,60vh)}
+#stageSize[aria-pressed=true]{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.readout{position:absolute;left:10px;top:8px;font-family:var(--mono);font-size:14px;font-variant-numeric:tabular-nums;pointer-events:none;display:flex;gap:14px;flex-wrap:wrap}
+.readout b{font-weight:600}
+.ctrl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.btn{min-height:42px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);font-weight:500;touch-action:manipulation;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);min-width:88px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{min-height:40px;padding:0 10px;border:0;background:var(--panel2);font-family:var(--mono);font-size:13px;cursor:pointer;touch-action:manipulation}
+header.top .lang{margin-left:auto;align-self:center}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed=true]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+#scrub{flex:1 1 180px;min-width:120px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:-4px 0 10px;overflow-x:auto}
+.tabs button{border:0;background:none;padding:10px 12px;min-height:42px;font-weight:500;color:var(--ink2);border-bottom:2px solid transparent;white-space:nowrap;cursor:pointer}
+.tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent)}
+#plot{height:330px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--ink2);margin-top:6px;align-items:center}
+.legend i{display:inline-block;width:18px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+.legend label{display:inline-flex;align-items:center;gap:5px}
+.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
+.mode{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--panel2);font-size:13px}
+.mode h3{margin:0 0 4px;font-size:14px;display:flex;justify-content:space-between;gap:6px}
+.mode .v{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.mode .acts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.mode .acts button{min-height:34px;padding:0 10px;font-size:12.5px}
+.muted{color:var(--ink2)}
+.stat{font-size:12px;color:var(--ink2);font-family:var(--mono)}
+.warn{color:var(--warn)}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1 data-en="Vibration Lab">진동 실험실</h1>
+  <span class="sub" data-en="Type the equations of motion — the app solves them numerically and animates the response">운동방정식을 입력하면 수치해를 구해 응답 그래프와 애니메이션으로 보여줍니다</span>
+  <div class="seg lang" role="group" aria-label="Language"><button type="button" data-lang="ko" aria-pressed="true">한국어</button><button type="button" data-lang="en" aria-pressed="false">English</button></div>
+</header>
+
+<div class="app">
+  <div class="col">
+    <section class="panel">
+      <p class="label"><span data-en="Examples">예제</span></p>
+      <select id="preset" aria-label="예제 선택"></select>
+    </section>
+
+    <section class="panel">
+      <p class="label"><span data-en="Equations of motion">운동방정식</span><button class="btn" id="applyBtn" data-en="Apply" style="min-height:32px;padding:0 10px;font-size:12px">적용</button></p>
+      <textarea id="eq" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="운동방정식"></textarea>
+      <div class="keys" id="keys"></div>
+      <div id="msg" class="msg" hidden></div>
+      <details class="help">
+        <summary data-en="Input rules">입력 규칙</summary>
+        <ul>
+          <li data-en="One equation per line: <code>x1'' = …</code> (use <code>x''</code> for 1 DOF)">한 줄에 식 하나: <code>x1'' = …</code> (1자유도는 <code>x''</code>)</li>
+          <li data-en="Displacement <code>x1 x2 x3</code>, velocity <code>x1'</code>, time <code>t</code>">변위 <code>x1 x2 x3</code>, 속도 <code>x1'</code>, 시간 <code>t</code></li>
+          <li data-en="Any other symbol (m, k, c, ω …) becomes a parameter slider automatically">그 밖의 기호(m, k, c, ω …)는 자동으로 파라미터 슬라이더가 됩니다</li>
+          <li data-en="Helper definitions such as <code>F = F0*cos(w*t)</code> can be defined and reused">보조식: <code>F = F0*cos(w*t)</code>처럼 정의해 두고 사용할 수 있습니다</li>
+          <li data-en="Defining <code>y = …</code> animates it as the wall (base) displacement"><code>y = …</code>를 정의하면 벽(기초) 변위로 애니메이션됩니다</li>
+          <li data-en="Functions: sin cos tan exp log sqrt abs sign atan2 min max step(t−t0)">함수: sin cos tan exp log sqrt abs sign atan2 min max step(t−t0)</li>
+          <li data-en="Text after <code>#</code> is a comment"><code>#</code> 뒤는 주석</li>
+        </ul>
+      </details>
+    </section>
+
+    <section class="panel">
+      <p class="label"><span data-en="Initial conditions · time">초기조건 · 시간</span></p>
+      <div class="ics" id="ics"></div>
+      <div class="row2">
+        <label><span data-en="Simulation time T [s]">시뮬레이션 시간 T [s]</span><input type="number" id="Tend" min="0.1" step="any"></label>
+        <label><span data-en="Animation model">애니메이션 모델</span><select id="anim">
+          <option value="h" data-en="Spring–mass (horizontal)">스프링-질량 (가로)</option>
+          <option value="v" data-en="Spring–mass (vertical)">스프링-질량 (세로)</option>
+          <option value="p" data-en="Pendulum (x = angle, rad)">진자 (x = 각도 rad)</option>
+        </select></label>
+      </div>
+    </section>
+
+    <section class="panel">
+      <p class="label"><span data-en="Parameters">파라미터</span><span class="muted" style="text-transform:none;letter-spacing:0;font-weight:400" data-en="detected from the equations">식에서 자동 인식</span></p>
+      <div class="params" id="params"></div>
+    </section>
+  </div>
+
+  <div class="col">
+    <section class="panel">
+      <div class="eqdisp" id="eqdisp"></div>
+      <div class="stagewrap">
+        <canvas id="stage"></canvas>
+        <div class="readout" id="readout"></div>
+      </div>
+      <div class="ctrl">
+        <button class="btn primary" id="play">일시정지</button>
+        <button class="btn" id="restart" data-en="Restart">처음부터</button>
+        <div class="seg" id="speed" role="group" aria-label="재생 속도"></div>
+        <input type="range" id="scrub" min="0" max="1000" value="0" aria-label="시간 이동">
+      </div>
+      <div class="ctrl" style="margin-top:6px">
+        <label class="stat" style="display:flex;align-items:center;gap:8px;flex:1 1 220px"><span data-en="Displacement gain">변위 배율</span><input type="range" id="gain" min="-2" max="2" step="0.05" value="0" style="max-width:220px"><b id="gainVal" style="min-width:48px">×1.00</b></label>
+        <button class="btn" id="gainReset" data-en="Fit" style="min-height:36px">맞춤</button>
+        <button class="btn" id="stageSize" data-en="Large view" aria-pressed="false" style="min-height:36px">크게 보기</button>
+        <span class="stat" id="simstat"></span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="tabs" role="tablist" id="tabs">
+        <button role="tab" data-t="time" aria-selected="true" data-en="Time response">시간 응답</button>
+        <button role="tab" data-t="phase" aria-selected="false" data-en="Phase plane">위상 평면</button>
+        <button role="tab" data-t="fft" aria-selected="false" data-en="Spectrum">응답 스펙트럼</button>
+        <button role="tab" data-t="frf" aria-selected="false" data-en="FRF">주파수응답 함수</button>
+      </div>
+      <canvas id="plot"></canvas>
+      <div class="legend" id="legend"></div>
+    </section>
+
+    <section class="panel">
+      <p class="label"><span data-en="Modal analysis">고유진동 해석</span><span class="muted" style="text-transform:none;letter-spacing:0;font-weight:400" data-en="linearized about the origin">원점 근방 선형화</span></p>
+      <div class="modes" id="modes"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+(() => {
+"use strict";
+const $ = s => document.querySelector(s);
+const TAU = 2*Math.PI;
+
+/* ---------------- language ---------------- */
+let LANG="ko";
+try{ const q=localStorage.getItem("vibLabLang"); if(q==="en"||q==="ko") LANG=q; else if(!/^ko/i.test(navigator.language||"")) LANG="en"; }catch(e){}
+const L=(ko,en)=>LANG==="en"?en:ko;
+const R=li=>L(`${li+1}행: `,`Line ${li+1}: `);
+/* ---------------- presets ---------------- */
+const PRESETS = [
+ {en:"1 DOF · Undamped free vibration", name:"1자유도 · 비감쇠 자유진동", eq:"x'' = -(k/m)*x", p:{m:[1,0.1,5],k:[10,0,100]}, x0:[1], v0:[0], T:10, anim:"h"},
+ {en:"1 DOF · Damped free vibration (compare ζ)", name:"1자유도 · 감쇠 자유진동 (ζ 비교)", eq:()=>L("# c를 바꿔 부족·임계·과감쇠를 비교","# vary c: under-, critically and over-damped")+"\nx'' = (-c*x' - k*x)/m", p:{m:[1,0.1,5],k:[10,0,100],c:[0.5,0,15]}, x0:[1], v0:[0], T:10, anim:"h"},
+ {en:"1 DOF · Harmonic forcing & resonance", name:"1자유도 · 조화가진과 공진", eq:"x'' = (F0*cos(w*t) - c*x' - k*x)/m", p:{m:[1,0.1,5],k:[10,0,100],c:[0.4,0,10],F0:[1,0,5],w:[3.16,0,10]}, x0:[0], v0:[0], T:40, anim:"h"},
+ {en:"1 DOF · Beats", name:"1자유도 · 맥놀이 (beat)", eq:"x'' = (F0*cos(w*t) - k*x)/m", p:{m:[1,0.1,5],k:[10,0,100],F0:[1,0,5],w:[2.9,0,10]}, x0:[0], v0:[0], T:60, anim:"h"},
+ {en:"1 DOF · Base excitation", name:"1자유도 · 기초가진", eq:()=>"y  = Y*sin(w*t)       # "+L("기초 변위","base displacement")+"\nyd = Y*w*cos(w*t)     # "+L("기초 속도","base velocity")+"\nx'' = (-c*(x' - yd) - k*(x - y))/m", p:{m:[1,0.1,5],k:[10,0,100],c:[0.5,0,10],Y:[0.2,0,1],w:[3,0,10]}, x0:[0], v0:[0], T:30, anim:"h"},
+ {en:"1 DOF · Rotating unbalance", name:"1자유도 · 회전 불평형", eq:"x'' = (me*e0*w^2*sin(w*t) - c*x' - k*x)/m", p:{m:[1,0.1,5],k:[10,0,100],c:[0.6,0,10],me:[0.1,0,1],e0:[1,0,2],w:[3,0,10]}, x0:[0], v0:[0], T:40, anim:"h"},
+ {en:"Nonlinear · Large-amplitude pendulum", name:"비선형 · 대진폭 진자", eq:"x'' = -(g/L)*sin(x) - c*x'", p:{g:[9.81,0,20],L:[1,0.1,3],c:[0.1,0,2]}, x0:[2.5], v0:[0], T:20, anim:"p"},
+ {en:"Nonlinear · Duffing oscillator", name:"비선형 · Duffing 진동자", eq:"x'' = -d*x' - a*x - b*x^3 + F*cos(w*t)", p:{d:[0.2,0,1],a:[-1,-2,2],b:[1,0,3],F:[0.3,0,1],w:[1.2,0,3]}, x0:[1], v0:[0], T:150, anim:"h"},
+ {en:"Nonlinear · Coulomb friction", name:"비선형 · 쿨롱 마찰", eq:"x'' = -(k/m)*x - mu*g*sign(x')", p:{m:[1,0.1,5],k:[10,0,100],mu:[0.1,0,0.5],g:[9.81,0,20]}, x0:[1], v0:[0], T:8, anim:"h"},
+ {en:"2 DOF · Free vibration (mode coupling)", name:"2자유도 · 자유진동 (모드 연성)", eq:"x1'' = (-k1*x1 - k2*(x1 - x2))/m1\nx2'' = (-k2*(x2 - x1))/m2", p:{m1:[1,0.1,5],m2:[1,0.1,5],k1:[10,0,50],k2:[10,0,50]}, x0:[1,0], v0:[0,0], T:30, anim:"h"},
+ {en:"2 DOF · Tuned mass damper", name:"2자유도 · 동흡진기 (TMD)", eq:"x1'' = (F0*cos(w*t) - k1*x1 - k2*(x1 - x2) - c2*(x1' - x2'))/m1\nx2'' = (-k2*(x2 - x1) - c2*(x2' - x1'))/m2", p:{m1:[1,0.1,5],k1:[10,0,50],m2:[0.1,0.01,1],k2:[1,0,10],c2:[0.02,0,1],F0:[1,0,5],w:[3.162,0,8]}, x0:[0,0], v0:[0,0], T:60, anim:"h"},
+ {en:"2 DOF · Double pendulum (small angle)", name:"2자유도 · 이중 진자 (소진폭)", eq:"x1'' = (g/L)*(-2*x1 + x2)\nx2'' = (g/L)*(2*x1 - 2*x2)", p:{g:[9.81,0,20],L:[1,0.2,3]}, x0:[0.15,0], v0:[0,0], T:20, anim:"p"},
+ {en:"3 DOF · Spring–mass chain", name:"3자유도 · 스프링-질량 체인", eq:"x1'' = (-k*x1 - k*(x1 - x2) - c*x1')/m\nx2'' = (-k*(x2 - x1) - k*(x2 - x3) - c*x2')/m\nx3'' = (-k*(x3 - x2) - c*x3')/m", p:{m:[1,0.1,5],k:[10,0,50],c:[0.05,0,2]}, x0:[0,0,1], v0:[0,0,0], T:40, anim:"h"},
+ {en:"3 DOF · 3-story building, ground motion", name:"3자유도 · 3층 건물 지진 응답", eq:"y  = Y*sin(w*t)\nyd = Y*w*cos(w*t)\nx1'' = (-k*(x1 - y) - c*(x1' - yd) - k*(x1 - x2) - c*(x1' - x2'))/m\nx2'' = (-k*(x2 - x1) - c*(x2' - x1') - k*(x2 - x3) - c*(x2' - x3'))/m\nx3'' = (-k*(x3 - x2) - c*(x3' - x2'))/m", p:{m:[1,0.1,5],k:[100,0,300],c:[0.3,0,5],Y:[0.05,0,0.3],w:[4.45,0,30]}, x0:[0,0,0], v0:[0,0,0], T:40, anim:"v"},
+];
+const DEF = {m:1,m1:1,m2:1,m3:1,k:10,k1:10,k2:10,k3:10,c:0.5,c1:0.5,c2:0.5,c3:0.5,g:9.81,L:1,l:1,w:1,"ω":1,F0:1,F:1,mu:0.1,"μ":0.1,zeta:0.05,"ζ":0.05};
+
+/* ---------------- parser / codegen ---------------- */
+const FN = {sin:"Math.sin",cos:"Math.cos",tan:"Math.tan",asin:"Math.asin",acos:"Math.acos",atan:"Math.atan",atan2:"Math.atan2",
+  sinh:"Math.sinh",cosh:"Math.cosh",tanh:"Math.tanh",exp:"Math.exp",log:"Math.log",ln:"Math.log",log10:"Math.log10",sqrt:"Math.sqrt",
+  abs:"Math.abs",sign:"Math.sign",sgn:"Math.sign",min:"Math.min",max:"Math.max",floor:"Math.floor",ceil:"Math.ceil",round:"Math.round",
+  step:"H.step",heaviside:"H.step",mod:"H.mod",sat:"H.sat",square:"H.square"};
+const H = {step:x=>x>=0?1:0, mod:(a,b)=>((a%b)+b)%b, sat:(x,l)=>Math.max(-(l??1),Math.min(l??1,x)), square:x=>Math.sign(Math.sin(x))};
+const CONST = {pi:"Math.PI",e:"Math.E"};
+
+function normalize(s){
+  return s.replace(/[’‘′`´]/g,"'").replace(/[″”“]/g,"''").replace(/[×·∙]/g,"*").replace(/[−–]/g,"-")
+          .replace(/²/g,"^2").replace(/³/g,"^3").replace(/＝/g,"=").replace(/π/g,"pi");
+}
+function gen(node, sym){
+  switch(node.type){
+    case "ConstantNode": return "("+Number(node.value)+")";
+    case "SymbolNode":
+      if(node.name in sym) return sym[node.name];
+      if(node.name in CONST) return CONST[node.name];
+      throw new Error(L("알 수 없는 기호: ","Unknown symbol: ")+node.name);
+    case "ParenthesisNode": return "("+gen(node.content,sym)+")";
+    case "OperatorNode": {
+      const a = node.args.map(x=>gen(x,sym));
+      if(a.length===1){
+        if(node.op==="-") return "(-"+a[0]+")";
+        if(node.op==="+") return a[0];
+        throw new Error(L("지원하지 않는 연산자: ","Unsupported operator: ")+node.op);
+      }
+      switch(node.op){
+        case "+": case "-": case "*": case "/": return "("+a[0]+node.op+a[1]+")";
+        case "^": return "Math.pow("+a[0]+","+a[1]+")";
+        case "<": case ">": case "<=": case ">=": return "(("+a[0]+node.op+a[1]+")?1:0)";
+        case "mod": case "%": return "H.mod("+a[0]+","+a[1]+")";
+      }
+      throw new Error(L("지원하지 않는 연산자: ","Unsupported operator: ")+node.op);
+    }
+    case "FunctionNode": {
+      const nm = node.fn && node.fn.name;
+      if(!FN[nm]) throw new Error(L("지원하지 않는 함수: ","Unsupported function: ")+nm+"()");
+      return FN[nm]+"("+node.args.map(x=>gen(x,sym)).join(",")+")";
+    }
+    case "ConditionalNode": return "("+gen(node.condition,sym)+"?"+gen(node.trueExpr,sym)+":"+gen(node.falseExpr,sym)+")";
+  }
+  throw new Error(L("지원하지 않는 표현: ","Unsupported expression: ")+node.toString());
+}
+function symbolsOf(node){
+  const out = new Set();
+  node.traverse((n,path,parent)=>{
+    if(n.type==="SymbolNode" && !(parent && parent.type==="FunctionNode" && path==="fn")) out.add(n.name);
+  });
+  return out;
+}
+function parseSystem(text){
+  const raw = normalize(text).split(/\n|;/);
+  const eqs = [], defs = [];
+  raw.forEach((line0, li)=>{
+    const line = line0.replace(/#.*$/,"").trim();
+    if(!line) return;
+    let k = -1;
+    for(let q=0;q<line.length;q++){ if(line[q]==="=" && !"<>!=".includes(line[q-1]||"") && line[q+1]!=="="){k=q;break;} }
+    if(k<0) throw new Error(R(li)+L("'=' 가 없습니다","missing '='"));
+    const lhs = line.slice(0,k).replace(/\s+/g,""), rhs0 = line.slice(k+1).trim();
+    if(!rhs0) throw new Error(R(li)+L("우변이 비어 있습니다","right-hand side is empty"));
+    if(/\bx[1-3]?\s*''/.test(rhs0)) throw new Error(R(li)+L("우변에는 가속도(x'')를 쓸 수 없습니다","acceleration (x'') cannot appear on the right-hand side"));
+    let rhs = rhs0.replace(/\bx([1-3]?)\s*'/g,(m,d)=>"_v"+(d||"1")).replace(/\bx\b/g,"x1");
+    if(rhs.includes("'")) throw new Error(R(li)+L("' 기호는 x, x1, x2, x3 뒤에만 쓸 수 있습니다 (다른 양의 도함수는 보조식으로 정의하세요)","' may only follow x, x1, x2, x3 (define other derivatives as helper expressions)"));
+    let node;
+    try{ node = math.parse(rhs); }catch(e){ throw new Error(R(li)+L("식을 해석할 수 없습니다 — ","cannot parse expression — ")+e.message); }
+    const m = lhs.match(/^x([1-3]?)''$/);
+    if(m){
+      const i = (m[1]?+m[1]:1)-1;
+      if(eqs[i]) throw new Error(L(`x${i+1}'' 식이 두 번 있습니다`,`x${i+1}'' is defined twice`));
+      eqs[i] = {node, src:line0.trim()};
+    } else if(/^[A-Za-zͰ-Ͽ][A-Za-z0-9_Ͱ-Ͽ]*$/.test(lhs)){
+      if(/^x[1-3]?$|^t$|^pi$|^e$/.test(lhs)) throw new Error(R(li)+L(`'${lhs}'는 예약된 기호라 보조식 이름으로 쓸 수 없습니다`,`'${lhs}' is reserved and cannot name a helper expression`));
+      defs.push({name:lhs,node,src:line0.trim()});
+    } else throw new Error(R(li)+L("좌변은 x'' / x1'' ~ x3'' 또는 보조식 이름이어야 합니다","left-hand side must be x'', x1''–x3'' or a helper name"));
+  });
+  const n = eqs.length;
+  if(!n) throw new Error(L("x'' = … 형태의 운동방정식이 필요합니다","Enter at least one equation of the form x'' = …"));
+  for(let i=0;i<n;i++) if(!eqs[i]) throw new Error(L(`x${i+1}'' 식이 없습니다 (x1''부터 차례로 입력하세요)`,`x${i+1}'' is missing (number the equations from x1'')`));
+
+  const sym = {t:"t"};
+  for(let i=0;i<n;i++){ sym["x"+(i+1)]="X["+i+"]"; sym["_v"+(i+1)]="X["+(n+i)+"]"; }
+  const params = [];
+  const seen = new Set(Object.keys(sym));
+  const addSyms = node => { for(const s of symbolsOf(node)){
+      if(seen.has(s) || s in CONST) continue;
+      if(/^x[1-3]$/.test(s)) throw new Error(L(`${s}가 쓰였지만 ${s}'' 식이 없습니다`,`${s} is used but ${s}'' is not defined`));
+      if(/^_v/.test(s)) throw new Error(L(`${s.replace("_v","x")}' 가 쓰였지만 해당 식이 없습니다`,`${s.replace("_v","x")}' is used but its equation is not defined`));
+      seen.add(s); params.push(s); sym[s]="P["+(params.length-1)+"]"; } };
+  // defs: evaluated in order; later defs may use earlier ones
+  const defNames = defs.map(d=>d.name);
+  let body = "";
+  const defSym = {...sym};
+  defs.forEach((d,j)=>{
+    for(const s of symbolsOf(d.node)){
+      const later = defNames.indexOf(s);
+      if(later>=j) throw new Error(L(`보조식 ${d.name}에서 ${s}는 먼저 정의되어야 합니다`,`In helper ${d.name}, ${s} must be defined earlier`));
+    }
+  });
+  // collect params (skip def names)
+  defNames.forEach(nm=>seen.add(nm));
+  defs.forEach(d=>addSyms(d.node)); eqs.forEach(e=>addSyms(e.node));
+  defs.forEach((d,j)=>{ sym[d.name]="d"+j; });
+  defs.forEach((d,j)=>{ body += `const d${j}=${gen(d.node,sym)};\n`; });
+  let acc = "";
+  for(let i=0;i<n;i++){ acc += `D[${i}]=X[${n+i}];\nD[${n+i}]=${gen(eqs[i].node,sym)};\n`; }
+  const f = new Function("H","Math",`return function(t,X,P,D){\n${body}${acc}}`)(H,Math);
+  const yIdx = defNames.indexOf("y");
+  const yf = yIdx>=0 ? new Function("H","Math",`return function(t,X,P){\n${body}return d${yIdx};}`)(H,Math) : null;
+  return {n,f,yf,params,eqs,defs};
+}
+
+/* ---------------- numerics ---------------- */
+function linearize(sys,P){
+  const n=sys.n, N=2*n, X=new Float64Array(N), Dp=new Float64Array(N), Dm=new Float64Array(N);
+  const Ax=[],Av=[]; let rough=false;
+  for(let i=0;i<n;i++){Ax.push(new Array(n).fill(0));Av.push(new Array(n).fill(0));}
+  const d = (j,h,i)=>{ X.fill(0); X[j]=h; sys.f(0,X,P,Dp); X[j]=-h; sys.f(0,X,P,Dm); return (Dp[n+i]-Dm[n+i])/(2*h); };
+  for(let j=0;j<N;j++){
+    X.fill(0); X[j]=1e-5; sys.f(0,X,P,Dp); X[j]=-1e-5; sys.f(0,X,P,Dm);
+    const g1=[]; for(let i=0;i<n;i++) g1.push((Dp[n+i]-Dm[n+i])/2e-5);
+    X[j]=1e-4; sys.f(0,X,P,Dp); X[j]=-1e-4; sys.f(0,X,P,Dm);
+    for(let i=0;i<n;i++){
+      const g2=(Dp[n+i]-Dm[n+i])/2e-4; let v=g1[i];
+      if(!isFinite(v) || Math.abs(v-g2)>1e-3*(1+Math.abs(g2))){ v=0; rough=true; }
+      if(j<n) Ax[i][j-0]=v; else Av[i][j-n]=v;
+    }
+  }
+  return {Ax,Av,rough};
+}
+// complex helpers [re,im]
+const cAdd=(a,b)=>[a[0]+b[0],a[1]+b[1]], cSub=(a,b)=>[a[0]-b[0],a[1]-b[1]],
+      cMul=(a,b)=>[a[0]*b[0]-a[1]*b[1],a[0]*b[1]+a[1]*b[0]],
+      cDiv=(a,b)=>{const d=b[0]*b[0]+b[1]*b[1]||1e-300;return[(a[0]*b[0]+a[1]*b[1])/d,(a[1]*b[0]-a[0]*b[1])/d]},
+      cAbs=a=>Math.hypot(a[0],a[1]);
+function matMul(A,B){const n=A.length;return A.map((r,i)=>B[0].map((_,j)=>r.reduce((s,a,k)=>s+a*B[k][j],0)));}
+function charPoly(A){ // returns c[0..n], p(λ)=Σ c_k λ^k, c_n = 1
+  const n=A.length; const c=new Array(n+1).fill(0); c[n]=1;
+  let M=A.map(r=>r.map(()=>0));
+  for(let k=1;k<=n;k++){
+    M=matMul(A,M); for(let i=0;i<n;i++) M[i][i]+=c[n-k+1];
+    const AM=matMul(A,M); let tr=0; for(let i=0;i<n;i++) tr+=AM[i][i];
+    c[n-k]=-tr/k;
+  }
+  return c;
+}
+function polyRoots(c){
+  const n=c.length-1; if(n===1) return [[-c[0],0]];
+  const R=1+Math.max(...c.slice(0,n).map(Math.abs));
+  let z=[]; for(let k=0;k<n;k++){const a=TAU*k/n+0.4; z.push([R*0.9*Math.cos(a),R*0.9*Math.sin(a)]);}
+  const ev=x=>{let s=[1,0];for(let k=n-1;k>=0;k--) s=cAdd(cMul(s,x),[c[k],0]);return s;};
+  for(let it=0;it<800;it++){
+    let delta=0;
+    for(let i=0;i<n;i++){
+      let den=[1,0]; for(let j=0;j<n;j++) if(j!==i) den=cMul(den,cSub(z[i],z[j]));
+      const dz=cDiv(ev(z[i]),den); z[i]=cSub(z[i],dz); delta=Math.max(delta,cAbs(dz));
+    }
+    if(delta<1e-13*R) break;
+  }
+  return z;
+}
+function nullVec(A,lam){
+  const n=A.length; const B=A.map((r,i)=>r.map((v,j)=>v-(i===j?lam:0)));
+  if(n===1) return [1];
+  let best=null,bn=0;
+  if(n===2){
+    for(const r of B){const v=[-r[1],r[0]],nn=Math.hypot(...v); if(nn>bn){bn=nn;best=v;}}
+  } else {
+    for(const [a,b] of [[0,1],[0,2],[1,2]]){
+      const r=B[a],s=B[b]; const v=[r[1]*s[2]-r[2]*s[1], r[2]*s[0]-r[0]*s[2], r[0]*s[1]-r[1]*s[0]];
+      const nn=Math.hypot(...v); if(nn>bn){bn=nn;best=v;}
+    }
+    if(bn<1e-9){ // repeated eigenvalue: take a vector orthogonal to the dominant row
+      let r=B.reduce((p,q)=>Math.hypot(...q)>Math.hypot(...p)?q:p);
+      best = Math.abs(r[0])>1e-12||Math.abs(r[1])>1e-12 ? [-r[1],r[0],0] : [1,0,0]; bn=1;
+    }
+  }
+  if(!best||bn<1e-12) best=new Array(n).fill(0).map((_,i)=>i===0?1:0);
+  let mi=0; best.forEach((v,i)=>{if(Math.abs(v)>Math.abs(best[mi]))mi=i;});
+  const s=best[mi]; return best.map(v=>v/s);
+}
+function modal(lin){
+  const n=lin.Ax.length; const K=lin.Ax.map(r=>r.map(v=>-v));
+  const roots=polyRoots(charPoly(K)).map(z=>z[0]).sort((a,b)=>a-b);
+  return roots.map(lam=>{
+    const phi=nullVec(K,lam);
+    let w=null,kind="ok";
+    if(lam>1e-9) w=Math.sqrt(lam); else if(lam>-1e-9){w=0;kind="rigid";} else kind="unstable";
+    let zeta=null;
+    if(w>0){ let num=0,den=0; for(let i=0;i<n;i++){den+=phi[i]*phi[i]; for(let j=0;j<n;j++) num+=phi[i]*(-lin.Av[i][j])*phi[j];} zeta=num/(2*w*den); }
+    return {lam,w,phi,zeta,kind};
+  });
+}
+function solveC(A,b){ // complex gaussian elimination
+  const n=A.length; const M=A.map((r,i)=>[...r.map(x=>[...x]),[...b[i]]]);
+  for(let c=0;c<n;c++){
+    let p=c; for(let r=c+1;r<n;r++) if(cAbs(M[r][c])>cAbs(M[p][c])) p=r;
+    [M[c],M[p]]=[M[p],M[c]];
+    if(cAbs(M[c][c])<1e-300) return null;
+    for(let r=c+1;r<n;r++){const f=cDiv(M[r][c],M[c][c]); for(let k=c;k<=n;k++) M[r][k]=cSub(M[r][k],cMul(f,M[c][k]));}
+  }
+  const x=new Array(n);
+  for(let r=n-1;r>=0;r--){let s=M[r][n]; for(let k=r+1;k<n;k++) s=cSub(s,cMul(M[r][k],x[k])); x[r]=cDiv(s,M[r][r]);}
+  return x;
+}
+function simulate(sys,P,x0,v0,T,wmax){
+  const n=sys.n,N=2*n;
+  let steps=Math.max(2000,Math.ceil(T*200));
+  if(wmax>0) steps=Math.max(steps,Math.ceil(T/(TAU/wmax/60)));
+  steps=Math.min(steps,400000);
+  const M=Math.min(steps,6000), stride=Math.ceil(steps/M); steps=stride*M;
+  const dt=T/steps;
+  const t=new Float64Array(M+1), X=[],V=[]; for(let i=0;i<n;i++){X.push(new Float64Array(M+1));V.push(new Float64Array(M+1));}
+  const Y=sys.yf?new Float64Array(M+1):null;
+  const s=new Float64Array(N),k1=new Float64Array(N),k2=new Float64Array(N),k3=new Float64Array(N),k4=new Float64Array(N),tmp=new Float64Array(N);
+  for(let i=0;i<n;i++){s[i]=x0[i]||0;s[n+i]=v0[i]||0;}
+  let last=M, blown=false;
+  const rec=(j,tt)=>{t[j]=tt;for(let i=0;i<n;i++){X[i][j]=s[i];V[i][j]=s[n+i];} if(Y) Y[j]=sys.yf(tt,s,P);};
+  rec(0,0);
+  let tt=0;
+  outer: for(let j=1;j<=M;j++){
+    for(let q=0;q<stride;q++){
+      sys.f(tt,s,P,k1);
+      for(let i=0;i<N;i++) tmp[i]=s[i]+0.5*dt*k1[i];
+      sys.f(tt+0.5*dt,tmp,P,k2);
+      for(let i=0;i<N;i++) tmp[i]=s[i]+0.5*dt*k2[i];
+      sys.f(tt+0.5*dt,tmp,P,k3);
+      for(let i=0;i<N;i++) tmp[i]=s[i]+dt*k3[i];
+      sys.f(tt+dt,tmp,P,k4);
+      for(let i=0;i<N;i++) s[i]+=dt/6*(k1[i]+2*k2[i]+2*k3[i]+k4[i]);
+      tt+=dt;
+    }
+    for(let i=0;i<N;i++) if(!isFinite(s[i])||Math.abs(s[i])>1e9){ blown=true; last=j-1; break outer; }
+    rec(j,tt);
+  }
+  return {n,t,X,V,Y,M:last,T:t[last],dt,steps,blown};
+}
+function fft(re,im){
+  const n=re.length;
+  for(let i=1,j=0;i<n;i++){let b=n>>1;for(;j&b;b>>=1)j^=b;j^=b;if(i<j){[re[i],re[j]]=[re[j],re[i]];[im[i],im[j]]=[im[j],im[i]];}}
+  for(let len=2;len<=n;len<<=1){
+    const a=-TAU/len,wr=Math.cos(a),wi=Math.sin(a);
+    for(let i=0;i<n;i+=len){let cr=1,ci=0;
+      for(let k=0;k<len/2;k++){const u=i+k,v=u+len/2;
+        const xr=re[v]*cr-im[v]*ci, xi=re[v]*ci+im[v]*cr;
+        re[v]=re[u]-xr; im[v]=im[u]-xi; re[u]+=xr; im[u]+=xi;
+        const nr=cr*wr-ci*wi; ci=cr*wi+ci*wr; cr=nr;}}
+  }
+}
+
+/* ---------------- state ---------------- */
+const S = {
+  sys:null, P:[], pv:{}, prange:{}, x0:[1,0,0], v0:[0,0,0], T:10, anim:"h",
+  sim:null, lin:null, modes:[], time:0, playing:true, speed:1, tab:"time", showV:false, frfIn:0, gain:0,
+  dirty:true, lastText:"", get lang(){return LANG;}
+};
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const SC = () => [css("--s1"),css("--s2"),css("--s3")];
+const fmt = (v,d=3) => { if(v==null||!isFinite(v)) return "—"; const a=Math.abs(v); if(a!==0&&(a<1e-3||a>=1e5)) return v.toExponential(2); return (+v.toFixed(d)).toString(); };
+
+/* ---------------- UI build ---------------- */
+const eqEl=$("#eq"), msgEl=$("#msg");
+function buildPresetOptions(){
+  const sel=$("#preset"), cur=sel.value; sel.innerHTML="";
+  PRESETS.forEach((p,i)=>{const o=document.createElement("option");o.value=i;o.textContent=S.lang==="en"?p.en:p.name;sel.appendChild(o);});
+  const c=document.createElement("option");c.value="custom";c.textContent=L("— 직접 입력한 식 —","— Custom equations —");sel.appendChild(c);
+  if(cur) sel.value=cur;
+}
+
+const KEYS=[["x1"],["x2"],["x3"],["'"],["''"],["t"],["("],[")"],["+"],["-"],["*"],["/"],["^"],["="],["sin("],["cos("],["exp("],["sqrt("],["abs("],["sign("],["↵","\n"],["⌫","BS"]];
+KEYS.forEach(([lab,ins])=>{
+  const b=document.createElement("button"); b.type="button"; b.textContent=lab;
+  if(lab==="↵"||lab==="⌫"){}
+  b.addEventListener("pointerdown",e=>e.preventDefault());
+  b.addEventListener("click",()=>{
+    const v=ins??lab, st=eqEl.selectionStart??eqEl.value.length, en=eqEl.selectionEnd??st;
+    if(v==="BS"){ if(st===en&&st>0){eqEl.setRangeText("",st-1,st,"end");} else eqEl.setRangeText("",st,en,"end"); }
+    else { const pad=/^[+\-*/=]$/.test(v)?" "+v+" ":v; eqEl.setRangeText(pad,st,en,"end"); }
+    onEqInput();
+  });
+  $("#keys").appendChild(b);
+});
+[0.25,0.5,1,2,4].forEach(v=>{
+  const b=document.createElement("button"); b.type="button"; b.textContent="×"+v; b.setAttribute("aria-pressed",v===1);
+  b.onclick=()=>{S.speed=v;[...$("#speed").children].forEach(c=>c.setAttribute("aria-pressed",c===b));};
+  $("#speed").appendChild(b);
+});
+
+function showMsg(text,err){ msgEl.hidden=!text; msgEl.textContent=text||""; msgEl.classList.toggle("err",!!err); }
+
+function buildICs(){
+  const box=$("#ics"); box.innerHTML='<span></span><span class="h">'+L('변위 x(0)','displ. x(0)')+'</span><span class="h">'+L('속도','velocity')+' x\'(0)</span>';
+  for(let i=0;i<S.sys.n;i++){
+    const lab=document.createElement("span"); lab.className="h"; lab.textContent=S.sys.n===1?"x":"x"+(i+1); lab.style.color=SC()[i];
+    const a=document.createElement("input"); a.type="number"; a.step="any"; a.id="x0_"+i; a.value=S.x0[i]??0;
+    const b=document.createElement("input"); b.type="number"; b.step="any"; b.id="v0_"+i; b.value=S.v0[i]??0;
+    a.oninput=()=>{S.x0[i]=parseFloat(a.value)||0;S.dirty=true;S.time=0;};
+    b.oninput=()=>{S.v0[i]=parseFloat(b.value)||0;S.dirty=true;S.time=0;};
+    box.append(lab,a,b);
+  }
+}
+function buildParams(){
+  const box=$("#params"); box.innerHTML="";
+  if(!S.sys.params.length){ box.innerHTML='<span class="muted">'+L('파라미터가 없습니다','No parameters')+'</span>'; }
+  S.sys.params.forEach(nm=>{
+    if(!(nm in S.pv)){ const d=DEF[nm]??1; S.pv[nm]=d; }
+    if(!S.prange[nm]){ const v=S.pv[nm]; S.prange[nm]=[Math.min(0,v*2), Math.max(Math.abs(v)*5,1)]; }
+    const [lo,hi]=S.prange[nm];
+    const row=document.createElement("div"); row.className="prm";
+    const safe=nm.replace(/[^\w]/g,c=>"u"+c.charCodeAt(0));
+    row.innerHTML=`<span class="nm" title="${nm}">${nm}</span><input type="range" id="pr_${safe}" min="${lo}" max="${hi}" step="${(hi-lo)/500}" value="${S.pv[nm]}" aria-label="${nm}">
+      <input type="number" id="pn_${safe}" step="any" value="${S.pv[nm]}" aria-label="${nm} 값">
+      <div class="rng">${L("범위","range")} <input type="number" step="any" id="plo_${safe}" value="${lo}" aria-label="${nm} 최소"> ~ <input type="number" step="any" id="phi_${safe}" value="${hi}" aria-label="${nm} 최대"></div>`;
+    const r=row.querySelector("input[type=range]"), num=row.querySelector("#pn_"+safe), lo_=row.querySelector("#plo_"+safe), hi_=row.querySelector("#phi_"+safe);
+    r.oninput=()=>{S.pv[nm]=+r.value; num.value=+(+r.value).toPrecision(4); S.dirty=true;};
+    num.oninput=()=>{const v=parseFloat(num.value); if(!isFinite(v))return; S.pv[nm]=v;
+      if(v<S.prange[nm][0]){S.prange[nm][0]=v;lo_.value=v;r.min=v;} if(v>S.prange[nm][1]){S.prange[nm][1]=v;hi_.value=v;r.max=v;}
+      r.step=(S.prange[nm][1]-S.prange[nm][0])/500; r.value=v; S.dirty=true;};
+    const setR=()=>{const a=parseFloat(lo_.value),b=parseFloat(hi_.value); if(isFinite(a)&&isFinite(b)&&b>a){S.prange[nm]=[a,b];r.min=a;r.max=b;r.step=(b-a)/500;r.value=S.pv[nm];}};
+    lo_.onchange=setR; hi_.onchange=setR;
+    box.appendChild(row);
+  });
+}
+function renderEqDisplay(){
+  const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+  const pretty=s=>esc(normalize(s)).replace(/#(.*)$/,'<span class="d">  # $1</span>')
+    .replace(/\bx([1-3]?)\s*''/g,(m,d)=>`ẍ<sub>${d}</sub>`).replace(/\bx([1-3]?)\s*'/g,(m,d)=>`ẋ<sub>${d}</sub>`)
+    .replace(/\bx([1-3])\b/g,"x<sub>$1</sub>").replace(/\s*\*\s*/g,"·").replace(/\bpi\b/g,"π");
+  const lines=[...S.sys.defs.map(d=>`<div class="d">${pretty(d.src)}</div>`), ...S.sys.eqs.map((e,i)=>`<div style="color:${S.sys.n>1?SC()[i]:"inherit"}">${pretty(e.src)}</div>`)];
+  $("#eqdisp").innerHTML=lines.join("");
+}
+
+function applyText(fromPreset){
+  let sys;
+  try{ sys=parseSystem(eqEl.value); }
+  catch(e){ showMsg(e.message,true); return false; }
+  S.sys=sys; S.lastText=eqEl.value;
+  showMsg("");
+  buildICs(); buildParams(); renderEqDisplay();
+  if(S.frfIn>=sys.n) S.frfIn=0;
+  S.dirty=true; S.time=0;
+  if(!fromPreset) $("#preset").value="custom";
+  save();
+  return true;
+}
+let eqTimer=null;
+function onEqInput(){ clearTimeout(eqTimer); eqTimer=setTimeout(()=>{ if(eqEl.value!==S.lastText) applyText(false); },650); }
+eqEl.addEventListener("input",onEqInput);
+eqEl.addEventListener("keydown",e=>{ if(e.key==="Enter"&&(e.metaKey||e.ctrlKey)){e.preventDefault();applyText(false);} });
+$("#applyBtn").onclick=()=>applyText(false);
+
+function loadPreset(i){
+  const p=PRESETS[i]; S.pv={}; S.prange={};
+  for(const [k,[v,lo,hi]] of Object.entries(p.p)){S.pv[k]=v;S.prange[k]=[lo,hi];}
+  S.x0=[...p.x0,0,0,0]; S.v0=[...p.v0,0,0,0]; S.T=p.T; S.anim=p.anim;
+  $("#preset").value=i; $("#Tend").value=p.T; $("#anim").value=p.anim; eqEl.value=typeof p.eq==="function"?p.eq():p.eq; setGain(0);
+  applyText(true); S.playing=true; syncPlay();
+}
+$("#preset").onchange=e=>{ if(e.target.value!=="custom") loadPreset(+e.target.value); };
+$("#Tend").oninput=e=>{const v=parseFloat(e.target.value); if(v>0){S.T=Math.min(v,5000);S.dirty=true;}};
+$("#anim").onchange=e=>{S.anim=e.target.value;save();};
+function setGain(v){ S.gain=v; $("#gain").value=v; $("#gainVal").textContent="×"+Math.pow(2,v).toFixed(2); }
+$("#gain").oninput=e=>setGain(+e.target.value);
+$("#gainReset").onclick=()=>setGain(0);
+$("#stageSize").onclick=()=>{ const big=$("#stage").classList.toggle("big"); $("#stageSize").setAttribute("aria-pressed",big); };
+function syncPlay(){ $("#play").textContent=S.playing?L("일시정지","Pause"):L("재생","Play"); }
+$("#play").onclick=()=>{ if(S.sim&&S.time>=S.sim.T) S.time=0; S.playing=!S.playing; syncPlay(); };
+$("#restart").onclick=()=>{S.time=0;S.playing=true;syncPlay();};
+$("#scrub").addEventListener("input",e=>{ if(S.sim){S.time=S.sim.T*e.target.value/1000;} });
+$("#tabs").addEventListener("click",e=>{const b=e.target.closest("button"); if(!b)return; S.tab=b.dataset.t;
+  [...$("#tabs").children].forEach(c=>c.setAttribute("aria-selected",c===b)); buildLegend(); save();});
+
+/* ---------------- recompute ---------------- */
+function recompute(){
+  const sys=S.sys; if(!sys) return;
+  S.P=sys.params.map(nm=>S.pv[nm]);
+  try{
+    S.lin=linearize(sys,S.P); S.modes=modal(S.lin);
+    const wmax=Math.max(0,...S.modes.map(m=>m.w||0), ...S.modes.map(m=>m.kind==="unstable"?Math.sqrt(-m.lam):0));
+    S.sim=simulate(sys,S.P,S.x0,S.v0,S.T,wmax);
+    S.wmax=wmax;
+  }catch(e){ showMsg(L("계산 중 오류: ","Computation error: ")+e.message,true); S.sim=null; return; }
+  if(S.time>S.sim.T) S.time=0;
+  const st=S.sim;
+  renderSimStat();
+  computeAutoScale();
+  buildModes(); buildLegend();
+  save();
+}
+function renderSimStat(){
+  const st=S.sim; if(!st){ $("#simstat").textContent=""; return; }
+  $("#simstat").innerHTML=`RK4 · Δt ${fmt(st.dt,5)} s · ${st.steps.toLocaleString()} ${L("스텝","steps")}`+(st.blown?` · <span class="warn">${L(`t=${fmt(st.T,2)} s에서 발산하여 중단`,`diverged at t=${fmt(st.T,2)} s — stopped`)}</span>`:"");
+}
+function applyLang(){
+  document.documentElement.lang=LANG;
+  document.querySelectorAll("[data-en]").forEach(el=>{ if(el.dataset.ko==null) el.dataset.ko=el.innerHTML; el.innerHTML=LANG==="en"?el.dataset.en:el.dataset.ko; });
+  document.querySelectorAll(".lang button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.lang===LANG));
+  $("#preset").setAttribute("aria-label",L("예제 선택","Choose an example"));
+  eqEl.setAttribute("aria-label",L("운동방정식","Equations of motion"));
+  $("#scrub").setAttribute("aria-label",L("시간 이동","Seek time"));
+  $("#speed").setAttribute("aria-label",L("재생 속도","Playback speed"));
+  buildPresetOptions(); syncPlay();
+  if(S.sys){ buildICs(); buildParams(); renderSimStat(); buildModes(); buildLegend(); }
+  if(!msgEl.hidden && msgEl.classList.contains("err")) applyText(true);
+}
+document.querySelectorAll(".lang button").forEach(b=>b.addEventListener("click",()=>{
+  LANG=b.dataset.lang; try{localStorage.setItem("vibLabLang",LANG);}catch(e){} applyLang();
+}));
+function computeAutoScale(){
+  const s=S.sim; let m=0;
+  for(let i=0;i<s.n;i++) for(let j=0;j<=s.M;j++) m=Math.max(m,Math.abs(s.X[i][j]));
+  if(s.Y) for(let j=0;j<=s.M;j++) m=Math.max(m,Math.abs(s.Y[j]));
+  S.maxAbs=m||1;
+}
+function wParamName(){ return S.sys.params.find(p=>/^(w|ω|omega|W|Ω|wf)$/.test(p)); }
+function buildModes(){
+  const box=$("#modes"); box.innerHTML="";
+  const wp=wParamName();
+  S.modes.forEach((md,r)=>{
+    const d=document.createElement("div"); d.className="mode";
+    const phi=md.phi.map(v=>fmt(v,2)).join(", ");
+    let body;
+    if(md.kind==="unstable") body=`<div class="warn">${L("불안정","Unstable")} (λ = ${fmt(md.lam)})</div><div class="muted">${L("원점이 불안정 평형점입니다","The origin is an unstable equilibrium")}</div>`;
+    else if(md.kind==="rigid") body=`<div>${L("강체 모드","Rigid-body mode")} (ω = 0)</div>`;
+    else body=`<div>ω<sub>n</sub> <span class="v">${fmt(md.w)}</span> rad/s · f<sub>n</sub> <span class="v">${fmt(md.w/TAU)}</span> Hz</div>
+      <div>T<sub>n</sub> <span class="v">${fmt(TAU/md.w)}</span> s · ζ ≈ <span class="v">${fmt(md.zeta,3)}</span></div>`;
+    d.innerHTML=`<h3><span>${L("모드","Mode")} ${r+1}</span><span class="v muted">φ = [${phi}]</span></h3>${body}<div class="acts"></div>`;
+    const acts=d.querySelector(".acts");
+    if(md.kind!=="unstable"){
+      const b=document.createElement("button"); b.className="btn"; b.textContent=L("이 모드로 초기조건","Start in this mode");
+      b.onclick=()=>{ const A=S.anim==="p"?0.2:(S.maxAbs>0?Math.min(S.maxAbs,1)||1:1);
+        for(let i=0;i<S.sys.n;i++){S.x0[i]=+(md.phi[i]*A).toPrecision(4);S.v0[i]=0;} buildICs(); S.time=0; S.playing=true; syncPlay(); S.dirty=true; };
+      acts.appendChild(b);
+    }
+    if(wp && md.w>0){
+      const b=document.createElement("button"); b.className="btn"; b.textContent=L(`${wp} = ωn 설정`,`Set ${wp} = ωn`);
+      b.onclick=()=>{ S.pv[wp]=+md.w.toPrecision(5); const rg=S.prange[wp]; if(rg&&md.w>rg[1]) rg[1]=Math.ceil(md.w*2); buildParams(); S.time=0; S.dirty=true; };
+      acts.appendChild(b);
+    }
+    box.appendChild(d);
+  });
+  if(S.lin&&S.lin.rough){ const w=document.createElement("div"); w.className="muted"; w.style.fontSize="12.5px";
+    w.textContent=L("원점에서 매끄럽지 않은 항(sign, abs 등)은 선형화에서 제외했습니다.","Terms not smooth at the origin (sign, abs, …) were left out of the linearization."); box.appendChild(w); }
+}
+function buildLegend(){
+  const LG=$("#legend"); if(!S.sys){LG.innerHTML="";return;}
+  const n=S.sys.n, C=SC(); let h="";
+  const nm=i=>n===1?"x":"x"+(i+1);
+  if(S.tab==="time"){
+    for(let i=0;i<n;i++) h+=`<span><i style="background:${C[i]}"></i>${nm(i)}(t)</span>`;
+    if(S.sim&&S.sim.Y) h+=`<span><i style="background:${css("--base")}"></i>y(t) ${L("기초","base")}</span>`;
+    h+=`<label><input type="checkbox" id="showV" ${S.showV?"checked":""}> ${L("속도도 표시 (점선)","show velocity (dashed)")}</label>`;
+  } else if(S.tab==="phase"){
+    for(let i=0;i<n;i++) h+=`<span><i style="background:${C[i]}"></i>${nm(i)} – ${nm(i)}'</span>`;
+    h+=`<span class="muted">${L("전체 궤적과 현재 상태(점)","full trajectory and current state (dot)")}</span>`;
+  } else if(S.tab==="fft"){
+    for(let i=0;i<n;i++) h+=`<span><i style="background:${C[i]}"></i>|X${n>1?i+1:""}(ω)|</span>`;
+    h+=`<span class="muted">${L("후반 50% 구간(정상상태)","last 50% of the run (steady state)")} · ${L("점선","dashed")} = ω<sub>n</sub></span>`;
+  } else {
+    for(let i=0;i<n;i++) h+=`<span><i style="background:${C[i]}"></i>${nm(i)}</span>`;
+    if(n>1){ h+=`<label>${L("가진 위치","Force applied at")} <select id="frfIn" style="min-height:34px;width:auto;padding:4px 8px">${Array.from({length:n},(_,i)=>`<option value="${i}" ${i===S.frfIn?"selected":""}>x${i+1}</option>`).join("")}</select></label>`; }
+    h+=`<span class="muted">${L("선형화 모델 · 정적 변위로 정규화","linearized model · normalized by static deflection")}</span>`;
+  }
+  LG.innerHTML=h;
+  const sv=$("#showV"); if(sv) sv.onchange=()=>{S.showV=sv.checked;};
+  const fi=$("#frfIn"); if(fi) fi.onchange=()=>{S.frfIn=+fi.value;};
+}
+
+/* ---------------- canvas helpers ---------------- */
+function fit(cv){
+  const r=cv.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  const w=Math.round(r.width*dpr), h=Math.round(r.height*dpr);
+  if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;}
+  const ctx=cv.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0); return [ctx,r.width,r.height];
+}
+function niceTicks(lo,hi,count=6){
+  if(!(hi>lo)){hi=lo+1;}
+  const span=hi-lo, step0=span/count, mag=Math.pow(10,Math.floor(Math.log10(step0))), f=step0/mag;
+  const step=(f<1.5?1:f<3?2:f<7?5:10)*mag;
+  const out=[]; for(let v=Math.ceil(lo/step)*step; v<=hi+step*1e-9; v+=step) out.push(Math.abs(v)<step*1e-9?0:v);
+  return out;
+}
+function axes(ctx,box,xr,yr,xl,yl,opt={}){
+  const {x,y,w,h}=box, grid=css("--grid"), ink2=css("--ink2"), line=css("--line");
+  ctx.font="12px "+css("--mono").split(",")[0]+", monospace";
+  ctx.lineWidth=1; ctx.fillStyle=ink2;
+  const X=v=>x+(v-xr[0])/(xr[1]-xr[0])*w, Y=v=>y+h-(v-yr[0])/(yr[1]-yr[0])*h;
+  ctx.textAlign="center"; ctx.textBaseline="top";
+  for(const v of niceTicks(xr[0],xr[1],Math.max(3,Math.floor(w/90)))){ const px=X(v); ctx.strokeStyle=grid; ctx.beginPath(); ctx.moveTo(px,y); ctx.lineTo(px,y+h); ctx.stroke(); ctx.fillText(fmtTick(v),px,y+h+5); }
+  ctx.textAlign="right"; ctx.textBaseline="middle";
+  const yt = opt.logY ? logTicks(yr) : niceTicks(yr[0],yr[1],Math.max(3,Math.floor(h/48)));
+  for(const v of yt){ const py=Y(v); if(py<y-1||py>y+h+1) continue; ctx.strokeStyle=grid; ctx.beginPath(); ctx.moveTo(x,py); ctx.lineTo(x+w,py); ctx.stroke(); ctx.fillText(opt.logY?("1e"+v):fmtTick(v),x-6,py); }
+  ctx.strokeStyle=line; ctx.strokeRect(x,y,w,h);
+  if(yr[0]<0&&yr[1]>0&&!opt.logY){ctx.strokeStyle=ink2;ctx.globalAlpha=.35;ctx.beginPath();ctx.moveTo(x,Y(0));ctx.lineTo(x+w,Y(0));ctx.stroke();ctx.globalAlpha=1;}
+  ctx.fillStyle=ink2; ctx.textAlign="right"; ctx.textBaseline="bottom"; ctx.fillText(xl,x+w,y+h+34);
+  ctx.save(); ctx.translate(x-(opt.yLabelOff||48),y+h/2); ctx.rotate(-Math.PI/2); ctx.textAlign="center"; ctx.textBaseline="bottom"; ctx.fillText(yl,0,0); ctx.restore();
+  return [X,Y];
+}
+function logTicks(yr){const o=[];for(let v=Math.ceil(yr[0]);v<=Math.floor(yr[1]);v++)o.push(v);return o;}
+function fmtTick(v){const a=Math.abs(v); if(a===0) return "0"; if(a>=1e4||a<1e-3) return v.toExponential(0); return (+v.toPrecision(4)).toString();}
+function poly(ctx,xs,ys,X,Y,from,to,color,width=2,dash=null){
+  ctx.strokeStyle=color; ctx.lineWidth=width; ctx.setLineDash(dash||[]); ctx.beginPath();
+  let pen=false;
+  for(let j=from;j<=to;j++){ const px=X(xs[j]), py=Y(ys[j]); if(!isFinite(py)){pen=false;continue;} if(!pen){ctx.moveTo(px,py);pen=true;} else ctx.lineTo(px,py); }
+  ctx.stroke(); ctx.setLineDash([]);
+}
+function idxAt(t){ const s=S.sim; return Math.max(0,Math.min(s.M,Math.round(t/s.T*s.M))); }
+function sampleAt(arr,t){ const s=S.sim; const f=t/s.T*s.M; const j=Math.max(0,Math.min(s.M-1,Math.floor(f))); const a=f-j; return arr[j]*(1-a)+arr[Math.min(j+1,s.M)]*a; }
+
+/* ---------------- drawing: plots ---------------- */
+function drawPlot(){
+  const cv=$("#plot"); const [ctx,W,Hh]=fit(cv); ctx.clearRect(0,0,W,Hh);
+  const s=S.sim; if(!s||s.M<2) return;
+  const C=SC(), n=s.n;
+  const box={x:62,y:12,w:Math.max(50,W-78),h:Hh-54};
+  if(S.tab==="time"){
+    let lo=Infinity,hi=-Infinity;
+    const series=[]; for(let i=0;i<n;i++){series.push([s.X[i],C[i],2,null]); if(S.showV) series.push([s.V[i],C[i],1.4,[5,4]]);}
+    if(s.Y) series.push([s.Y,css("--base"),1.5,[2,3]]);
+    for(const [a] of series) for(let j=0;j<=s.M;j++){lo=Math.min(lo,a[j]);hi=Math.max(hi,a[j]);}
+    const pad=(hi-lo)*0.08||1; const [X,Y]=axes(ctx,box,[0,s.T],[lo-pad,hi+pad],"t [s]",S.showV?"x, x'":"x");
+    const ci=idxAt(S.time);
+    for(const [a,col,wd,dash] of series){ ctx.globalAlpha=.28; poly(ctx,s.t,a,X,Y,ci,s.M,col,wd,dash); ctx.globalAlpha=1; poly(ctx,s.t,a,X,Y,0,ci,col,wd,dash); }
+    const px=X(S.time); ctx.strokeStyle=css("--ink"); ctx.globalAlpha=.5; ctx.beginPath(); ctx.moveTo(px,box.y); ctx.lineTo(px,box.y+box.h); ctx.stroke(); ctx.globalAlpha=1;
+    for(let i=0;i<n;i++){ dot(ctx,px,Y(sampleAt(s.X[i],S.time)),C[i]); }
+  } else if(S.tab==="phase"){
+    let xl=Infinity,xh=-Infinity,vl=Infinity,vh=-Infinity;
+    for(let i=0;i<n;i++) for(let j=0;j<=s.M;j++){xl=Math.min(xl,s.X[i][j]);xh=Math.max(xh,s.X[i][j]);vl=Math.min(vl,s.V[i][j]);vh=Math.max(vh,s.V[i][j]);}
+    const px_=(xh-xl)*.08||1, pv_=(vh-vl)*.08||1;
+    const [X,Y]=axes(ctx,box,[xl-px_,xh+px_],[vl-pv_,vh+pv_],L("x (변위)","x (displacement)"),L("x' (속도)","x' (velocity)"));
+    const ci=idxAt(S.time);
+    for(let i=0;i<n;i++){ ctx.globalAlpha=.25; poly(ctx,s.X[i],s.V[i],X,Y,0,s.M,C[i],1.2); ctx.globalAlpha=1;
+      poly(ctx,s.X[i],s.V[i],X,Y,Math.max(0,ci-Math.round(s.M*0.06)),ci,C[i],2.2);
+      dot(ctx,X(sampleAt(s.X[i],S.time)),Y(sampleAt(s.V[i],S.time)),C[i]); }
+    const x0=s.X[0][0],v0=s.V[0][0]; ctx.fillStyle=css("--ink2"); ctx.fillText(L("시작","start"),X(x0)+22,Y(v0)-10);
+  } else if(S.tab==="fft"){
+    const j0=Math.floor(s.M/2), Ln=s.M-j0+1; let N=1; while(N<Ln) N<<=1; N=Math.max(N*4,4096);
+    const dt=s.T/s.M; const spec=[]; let amax=0;
+    for(let i=0;i<n;i++){
+      const re=new Float64Array(N), im=new Float64Array(N); let mean=0; for(let j=0;j<Ln;j++) mean+=s.X[i][j0+j]; mean/=Ln;
+      let wsum=0; for(let j=0;j<Ln;j++){const wn=0.5-0.5*Math.cos(TAU*j/(Ln-1)); re[j]=(s.X[i][j0+j]-mean)*wn; wsum+=wn;}
+      fft(re,im); const a=new Float64Array(N/2); for(let k=0;k<N/2;k++){a[k]=2*Math.hypot(re[k],im[k])/wsum; amax=Math.max(amax,a[k]);}
+      spec.push(a);
+    }
+    const dw=TAU/(N*dt); const wN=Math.PI/dt;
+    let wtop = S.wmax>0 ? S.wmax*3 : 0;
+    const wp=wParamName(); if(wp) wtop=Math.max(wtop,S.pv[wp]*1.6);
+    if(!(wtop>0)){ let kk=0; for(const a of spec) for(let k=0;k<a.length;k++) if(a[k]>amax*0.02) kk=Math.max(kk,k); wtop=Math.max(dw*kk*1.5,dw*20); }
+    wtop=Math.min(wtop,wN); const K=Math.min(N/2-1,Math.ceil(wtop/dw));
+    const ws=new Float64Array(K+1); for(let k=0;k<=K;k++) ws[k]=k*dw;
+    const [X,Y]=axes(ctx,box,[0,wtop],[0,(amax||1)*1.1],"ω [rad/s]",L("진폭","amplitude"));
+    S.modes.forEach(m=>{ if(m.w>0&&m.w<wtop){ ctx.strokeStyle=css("--ink2"); ctx.setLineDash([4,4]); ctx.beginPath(); ctx.moveTo(X(m.w),box.y); ctx.lineTo(X(m.w),box.y+box.h); ctx.stroke(); ctx.setLineDash([]);} });
+    spec.forEach((a,i)=>poly(ctx,ws,a,X,Y,0,K,C[i],2));
+    if(s.T/2 < (S.modes.find(m=>m.w>0)?.w ? 4*TAU/S.modes.find(m=>m.w>0).w : 0)){ ctx.fillStyle=css("--warn"); ctx.textAlign="left"; ctx.fillText(L("시간 T가 짧아 주파수 분해능이 낮습니다","T is short, so frequency resolution is coarse"),box.x+8,box.y+14); }
+  } else {
+    const {Ax,Av}=S.lin, j=S.frfIn;
+    const w1 = S.wmax>0?S.wmax:1; const wtop=Math.max(w1*2.5, (wParamName()?S.pv[wParamName()]*1.3:0));
+    const NP=500; const ws=new Float64Array(NP+1), mag=[], ph=[];
+    for(let i=0;i<n;i++){mag.push(new Float64Array(NP+1));ph.push(new Float64Array(NP+1));}
+    // static normalization
+    const Z0=Ax.map((r,a)=>r.map((v,b)=>[-v,0]));
+    const e=Array.from({length:n},(_,a)=>[a===j?1:0,0]);
+    const H0=solveC(Z0,e); const norm = H0 && cAbs(H0[j])>1e-12 ? cAbs(H0[j]) : 1;
+    for(let k=0;k<=NP;k++){
+      const w=wtop*k/NP; ws[k]=w;
+      const Z=Ax.map((r,a)=>r.map((v,b)=>[ (a===b?-w*w:0) - v, -w*Av[a][b] ]));
+      const Hx=solveC(Z,e);
+      for(let i=0;i<n;i++){ if(!Hx){mag[i][k]=NaN;ph[i][k]=NaN;continue;} const m=cAbs(Hx[i])/norm; mag[i][k]=m>0?Math.log10(m):NaN; ph[i][k]=Math.atan2(Hx[i][1],Hx[i][0])*180/Math.PI; }
+    }
+    let lo=Infinity,hi=-Infinity; mag.forEach(a=>a.forEach(v=>{if(isFinite(v)){lo=Math.min(lo,v);hi=Math.max(hi,v);}}));
+    lo=Math.max(lo,hi-6); hi=Math.min(hi,6); if(!(hi>lo)){lo-=1;hi+=1;}
+    lo=Math.floor(lo*2)/2; hi=Math.ceil(hi*2)/2;
+    const b1={x:box.x,y:box.y,w:box.w,h:(box.h-30)*0.62}, b2={x:box.x,y:box.y+b1.h+30,w:box.w,h:(box.h-30)*0.38};
+    const [X1,Y1]=axes(ctx,b1,[0,wtop],[lo,hi],"","|H| / |H(0)|",{logY:true});
+    for(let i=0;i<n;i++){ for(let k=0;k<=NP;k++) if(isFinite(mag[i][k])) mag[i][k]=Math.max(lo,Math.min(hi,mag[i][k])); poly(ctx,ws,mag[i],X1,Y1,0,NP,C[i],2); }
+    const [X2,Y2]=axes(ctx,b2,[0,wtop],[-180,180],"ω [rad/s]",L("위상 [°]","phase [°]"));
+    for(let i=0;i<n;i++){ ctx.fillStyle=C[i]; for(let k=0;k<=NP;k+=2){ if(isFinite(ph[i][k])) ctx.fillRect(X2(ws[k])-1,Y2(ph[i][k])-1,2,2);} }
+    const wp=wParamName();
+    if(wp){ const w=S.pv[wp]; if(w>=0&&w<=wtop){ for(const [bx,XX] of [[b1,X1],[b2,X2]]){ ctx.strokeStyle=css("--accent"); ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(XX(w),bx.y); ctx.lineTo(XX(w),bx.y+bx.h); ctx.stroke(); }
+      ctx.fillStyle=css("--accent"); ctx.textAlign="left"; ctx.textBaseline="top"; ctx.fillText(`${wp} = ${fmt(w)}`,X1(w)+6,b1.y+4); } }
+  }
+}
+function dot(ctx,x,y,c){ ctx.fillStyle=c; ctx.beginPath(); ctx.arc(x,y,5,0,TAU); ctx.fill(); ctx.strokeStyle=css("--panel"); ctx.lineWidth=2; ctx.stroke(); }
+
+/* ---------------- drawing: stage ---------------- */
+function spring(ctx,x1,y1,x2,y2,amp,coils){
+  const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L,nx=-uy,ny=ux;
+  const lead=Math.min(10,L*0.15), body=L-2*lead;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x1+ux*lead,y1+uy*lead);
+  const seg=coils*2;
+  for(let k=1;k<=seg;k++){ const s=lead+body*(k-0.5)/seg, side=(k%2?1:-1)*amp; ctx.lineTo(x1+ux*s+nx*side,y1+uy*s+ny*side); }
+  ctx.lineTo(x2-ux*lead,y2-uy*lead); ctx.lineTo(x2,y2); ctx.stroke();
+}
+function damper(ctx,x1,y1,x2,y2,wd){
+  const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L,nx=-uy,ny=ux;
+  const cyl=Math.min(34,L*0.45), cs=L*0.5-cyl/2; // cylinder attached to 1
+  const p=(s,o)=>[x1+ux*s+nx*o,y1+uy*s+ny*o];
+  ctx.beginPath();
+  ctx.moveTo(...p(0,0)); ctx.lineTo(...p(cs,0));
+  ctx.moveTo(...p(cs+cyl,-wd)); ctx.lineTo(...p(cs,-wd)); ctx.lineTo(...p(cs,wd)); ctx.lineTo(...p(cs+cyl,wd));
+  const pist=cs+cyl*0.6 + 0; ctx.moveTo(...p(pist,-wd*0.7)); ctx.lineTo(...p(pist,wd*0.7));
+  ctx.moveTo(...p(pist,0)); ctx.lineTo(...p(L,0)); ctx.stroke();
+}
+function hatch(ctx,x,y,w,h,vertical){
+  ctx.save(); ctx.beginPath(); ctx.rect(x,y,w,h); ctx.clip(); ctx.strokeStyle=css("--hatch"); ctx.lineWidth=1;
+  for(let k=-h-w;k<w+h;k+=8){ ctx.beginPath(); ctx.moveTo(x+k,y+h); ctx.lineTo(x+k+h,y); ctx.stroke(); }
+  ctx.restore();
+}
+function drawStage(){
+  const cv=$("#stage"); const [ctx,W,Hh]=fit(cv); ctx.clearRect(0,0,W,Hh);
+  const s=S.sim; if(!s) return;
+  const n=s.n, C=SC(), ink=css("--ink"), ink2=css("--ink2"), line=css("--line");
+  const x=[]; for(let i=0;i<n;i++) x.push(sampleAt(s.X[i],S.time));
+  const y=s.Y?sampleAt(s.Y,S.time):0;
+  const damped = S.lin && S.lin.Av.some(r=>r.some(v=>Math.abs(v)>1e-9));
+  const g=Math.pow(2,S.gain);
+  // readout
+  const nm=i=>n===1?"x":"x"+(i+1);
+  $("#readout").innerHTML=`<span>t = <b>${S.time.toFixed(2)}</b> s</span>`+x.map((v,i)=>`<span style="color:${C[i]}">${nm(i)} = <b>${(v>=0?"+":"")+v.toFixed(3)}</b></span>`).join("");
+  ctx.lineCap="round"; ctx.lineJoin="round";
+  if(S.anim==="p"){
+    let thMax=0; for(let i=0;i<n;i++) for(let j=0;j<=s.M;j++) thMax=Math.max(thMax,Math.abs(s.X[i][j]));
+    const flips=thMax>Math.PI/2*0.9;
+    const top=flips?Hh/2:44, px=W/2;
+    const avail=flips?Math.min(Hh/2-22, W/2-24):Math.min(Hh-top-26, W/2-24);
+    const Ls=avail/n*Math.min(1,Math.pow(2,S.gain))-14/n;
+    ctx.fillStyle=css("--stage"); hatch(ctx,px-70,top-14,140,12); ctx.strokeStyle=ink2; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(px-70,top-2); ctx.lineTo(px+70,top-2); ctx.stroke();
+    // reference vertical
+    ctx.setLineDash([4,5]); ctx.strokeStyle=line; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(px,top); ctx.lineTo(px,top+avail); ctx.stroke(); ctx.setLineDash([]);
+    // trail of last bob
+    const ci=idxAt(S.time), back=Math.round(s.M*0.08);
+    ctx.globalAlpha=.35; ctx.strokeStyle=C[n-1]; ctx.lineWidth=1.5; ctx.beginPath();
+    for(let j=Math.max(0,ci-back);j<=ci;j++){ let cx=px,cy=top; for(let i=0;i<n;i++){cx+=Ls*Math.sin(s.X[i][j]);cy+=Ls*Math.cos(s.X[i][j]);} j===Math.max(0,ci-back)?ctx.moveTo(cx,cy):ctx.lineTo(cx,cy); }
+    ctx.stroke(); ctx.globalAlpha=1;
+    let cx=px,cy=top;
+    for(let i=0;i<n;i++){
+      const nx=cx+Ls*Math.sin(x[i]), ny=cy+Ls*Math.cos(x[i]);
+      ctx.strokeStyle=ink; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(nx,ny); ctx.stroke();
+      ctx.fillStyle=ink; ctx.beginPath(); ctx.arc(cx,cy,4,0,TAU); ctx.fill();
+      ctx.fillStyle=C[i]; ctx.beginPath(); ctx.arc(nx,ny,14,0,TAU); ctx.fill();
+      ctx.fillStyle="#fff"; ctx.font="600 11px "+css("--mono").split(",")[0]; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(n>1?"m"+(i+1):"m",nx,ny);
+      cx=nx; cy=ny;
+    }
+    ctx.fillStyle=ink2; ctx.font="12px "+css("--mono").split(",")[0]; ctx.textAlign="right"; ctx.textBaseline="bottom"; ctx.fillText(L("각도는 실제 크기로 표시","angles drawn to true scale"),W-10,Hh-8);
+    return;
+  }
+  const horiz=S.anim==="h";
+  // Fit-to-screen layout: the largest displacement (k·pitch) and the moving wall always stay inside the canvas.
+  const len=horiz?W:Hh, base0=horiz?34:30, endPad=horiz?18:26, hasY=!!s.Y;
+  const k=0.25*g;
+  const pitch=(len-base0-endPad)/(n+k*(hasY?2:1));
+  const box=Math.max(14,Math.min(horiz?62:52, pitch*0.42, horiz?(Hh-80)*0.6:W*0.25));
+  const start=base0+(hasY?k*pitch:0);
+  const scale=k*pitch/(S.maxAbs||1);
+  const off=v=>v*scale;
+  const mid=horiz?Hh*0.56:W/2;
+  const wallPos=start+off(y);
+  ctx.strokeStyle=ink; ctx.lineWidth=2;
+  if(horiz){
+    // ground
+    const gy=mid+box/2+8; hatch(ctx,0,gy,W,10); ctx.strokeStyle=ink2; ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(W,gy); ctx.stroke();
+    hatch(ctx,wallPos-16,mid-box/2-26,16,box+34); ctx.strokeStyle=ink; ctx.lineWidth=2.5; ctx.beginPath(); ctx.moveTo(wallPos,mid-box/2-26); ctx.lineTo(wallPos,gy); ctx.stroke();
+    if(s.Y){ ctx.fillStyle=css("--base"); ctx.font="12px "+css("--mono").split(",")[0]; ctx.textAlign="center"; ctx.textBaseline="bottom"; ctx.fillText("y(t)",wallPos-8,mid-box/2-30); }
+  } else {
+    hatch(ctx,mid-80,wallPos-14,160,12); ctx.strokeStyle=ink; ctx.lineWidth=2.5; ctx.beginPath(); ctx.moveTo(mid-80,wallPos); ctx.lineTo(mid+80,wallPos); ctx.stroke();
+    if(s.Y){ ctx.fillStyle=css("--base"); ctx.font="12px "+css("--mono").split(",")[0]; ctx.textAlign="left"; ctx.textBaseline="middle"; ctx.fillText("y(t)",mid+88,wallPos); }
+  }
+  let prev=wallPos;
+  for(let i=0;i<n;i++){
+    const eq=start+pitch*(i+1)-box/2; const c=eq+off(x[i]);
+    const a=prev, b=c-box/2;
+    ctx.strokeStyle=ink; ctx.lineWidth=1.8;
+    const sOff=damped?box*0.22:0;
+    if(horiz){
+      spring(ctx,a,mid-sOff,b,mid-sOff,Math.min(9,box*0.14),7);
+      if(damped) damper(ctx,a,mid+sOff,b,mid+sOff,Math.min(8,box*0.13));
+      // equilibrium tick
+      ctx.strokeStyle=line; ctx.setLineDash([3,4]); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(eq,mid-box/2-18); ctx.lineTo(eq,mid+box/2+6); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle=C[i]; roundRect(ctx,b,mid-box/2,box,box,6); ctx.fill();
+      ctx.fillStyle="#fff"; ctx.font="600 13px "+css("--mono").split(",")[0]; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(n>1?"m"+(i+1):"m",c,mid);
+      // wheels
+      ctx.fillStyle=css("--ink2"); for(const wx of [b+box*0.25,b+box*0.75]){ctx.beginPath();ctx.arc(wx,mid+box/2+4,4,0,TAU);ctx.fill();}
+    } else {
+      spring(ctx,mid-sOff,a,mid-sOff,b,Math.min(9,box*0.16),6);
+      if(damped) damper(ctx,mid+sOff,a,mid+sOff,b,Math.min(8,box*0.14));
+      ctx.strokeStyle=line; ctx.setLineDash([3,4]); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(mid-box*1.3,eq); ctx.lineTo(mid+box*1.3,eq); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle=C[i]; roundRect(ctx,mid-box*0.8,b,box*1.6,box,6); ctx.fill();
+      ctx.fillStyle="#fff"; ctx.font="600 13px "+css("--mono").split(",")[0]; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(n>1?"m"+(i+1):"m",mid,c);
+    }
+    prev=c+box/2;
+  }
+  ctx.fillStyle=ink2; ctx.font="12px "+css("--mono").split(",")[0]; ctx.textAlign="right"; ctx.textBaseline="bottom";
+  ctx.fillText(L("점선 = 평형 위치 · 변위 확대 표시","dashed = equilibrium · displacements magnified"),W-10,Hh-6);
+}
+function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+
+/* ---------------- loop ---------------- */
+let lastTs=null;
+function frame(ts){
+  if(S.dirty){ S.dirty=false; recompute(); }
+  if(S.sim){
+    if(lastTs!=null && S.playing){ S.time+=Math.min(0.1,(ts-lastTs)/1000)*S.speed; if(S.time>S.sim.T) S.time=0; }
+    $("#scrub").value=Math.round(S.time/S.sim.T*1000);
+    drawStage(); drawPlot();
+  }
+  lastTs=ts; requestAnimationFrame(frame);
+}
+
+/* ---------------- persistence (convenience only) ---------------- */
+let saveTimer=null;
+function save(){ clearTimeout(saveTimer); saveTimer=setTimeout(()=>{ try{ localStorage.setItem("vibLab",JSON.stringify({eq:eqEl.value,pv:S.pv,prange:S.prange,x0:S.x0,v0:S.v0,T:S.T,anim:S.anim,tab:S.tab,preset:$("#preset").value})); }catch(e){} },400); }
+function restore(){
+  try{ const d=JSON.parse(localStorage.getItem("vibLab")||"null"); if(!d||!d.eq) return false;
+    Object.assign(S,{pv:d.pv||{},prange:d.prange||{},x0:d.x0||[0,0,0],v0:d.v0||[0,0,0],T:d.T||10,anim:d.anim||"h",tab:d.tab||"time"});
+    eqEl.value=d.eq; $("#Tend").value=S.T; $("#anim").value=S.anim; $("#preset").value=d.preset??"custom";
+    [...$("#tabs").children].forEach(c=>c.setAttribute("aria-selected",c.dataset.t===S.tab));
+    return applyText(true);
+  }catch(e){ return false; }
+}
+function boot(){
+  if(typeof math==="undefined"){ showMsg(L("수식 해석 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 새로고침하세요.","Could not load the math library. Check the internet connection and reload."),true); return; }
+  applyLang();
+  if(!restore()) loadPreset(2);
+  requestAnimationFrame(frame);
+}
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",()=>{ if(S.sys){buildICs();renderEqDisplay();buildLegend();} });
+boot();
+})();
+</script>
+
+</body>
+</html>
