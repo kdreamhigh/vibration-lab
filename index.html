@@ -13,7 +13,7 @@
 :root{
   --ground:#EEF1EF; --panel:#FFFFFF; --panel2:#F6F8F7; --ink:#15201C; --ink2:#51605A; --line:#D3DBD7;
   --accent:#0A6E62; --accent-ink:#FFFFFF; --accent-soft:#DCEFEB;
-  --s1:#2459C9; --s2:#C8364B; --s3:#C98A00; --base:#6B7A74;
+  --s1:#2459C9; --s2:#C8364B; --s3:#C98A00; --base:#6B7A74; --inp:#7A4FA8;
   --grid:#E3E9E6; --err:#B42318; --err-soft:#FDECEA; --warn:#8A5A00;
   --stage:#F8FAF9; --hatch:#9AA8A2;
   --sans:"IBM Plex Sans KR", "Apple SD Gothic Neo", system-ui, sans-serif;
@@ -23,7 +23,7 @@
   :root:not([data-theme="light"]){
     --ground:#0E1412; --panel:#161E1B; --panel2:#1B2521; --ink:#E4ECE8; --ink2:#98A8A1; --line:#2C3834;
     --accent:#3FC1AD; --accent-ink:#06201B; --accent-soft:#16332E;
-    --s1:#6F9BFF; --s2:#FF7A8C; --s3:#F2C14E; --base:#8C9B95;
+    --s1:#6F9BFF; --s2:#FF7A8C; --s3:#F2C14E; --base:#8C9B95; --inp:#C4A3F0;
     --grid:#222D29; --err:#FF8A80; --err-soft:#3A1E1C; --warn:#F2C14E;
     --stage:#121A17; --hatch:#56645E;
   }
@@ -31,7 +31,7 @@
 :root[data-theme="dark"]{
   --ground:#0E1412; --panel:#161E1B; --panel2:#1B2521; --ink:#E4ECE8; --ink2:#98A8A1; --line:#2C3834;
   --accent:#3FC1AD; --accent-ink:#06201B; --accent-soft:#16332E;
-  --s1:#6F9BFF; --s2:#FF7A8C; --s3:#F2C14E; --base:#8C9B95;
+  --s1:#6F9BFF; --s2:#FF7A8C; --s3:#F2C14E; --base:#8C9B95; --inp:#C4A3F0;
   --grid:#222D29; --err:#FF8A80; --err-soft:#3A1E1C; --warn:#F2C14E;
   --stage:#121A17; --hatch:#56645E;
 }
@@ -138,6 +138,7 @@ header.top .lang{margin-left:auto;align-self:center}
           <li data-en="Any other symbol (m, k, c, ω …) becomes a parameter slider automatically">그 밖의 기호(m, k, c, ω …)는 자동으로 파라미터 슬라이더가 됩니다</li>
           <li data-en="Helper definitions such as <code>F = F0*cos(w*t)</code> can be defined and reused">보조식: <code>F = F0*cos(w*t)</code>처럼 정의해 두고 사용할 수 있습니다</li>
           <li data-en="Defining <code>y = …</code> animates it as the wall (base) displacement"><code>y = …</code>를 정의하면 벽(기초) 변위로 애니메이션됩니다</li>
+          <li data-en="A helper named <code>F</code> (or <code>u</code>, <code>F1</code>…<code>F3</code>) is drawn with the time response on its own right-hand axis">보조식 이름을 <code>F</code>(또는 <code>u</code>, <code>F1</code>~<code>F3</code>)로 하면 시간 응답 그래프에 오른쪽 축으로 함께 그려집니다</li>
           <li data-en="Functions: sin cos tan exp log sqrt abs sign atan2 min max step(t−t0)">함수: sin cos tan exp log sqrt abs sign atan2 min max step(t−t0)</li>
           <li data-en="Text after <code>#</code> is a comment"><code>#</code> 뒤는 주석</li>
         </ul>
@@ -217,15 +218,15 @@ const R=li=>L(`${li+1}행: `,`Line ${li+1}: `);
 const PRESETS = [
  {en:"1 DOF · Undamped free vibration", name:"1자유도 · 비감쇠 자유진동", eq:"x'' = -(k/m)*x", p:{m:[1,0.1,5],k:[10,0,100]}, x0:[1], v0:[0], T:10, anim:"h"},
  {en:"1 DOF · Damped free vibration (compare ζ)", name:"1자유도 · 감쇠 자유진동 (ζ 비교)", eq:()=>L("# c를 바꿔 부족·임계·과감쇠를 비교","# vary c: under-, critically and over-damped")+"\nx'' = (-c*x' - k*x)/m", p:{m:[1,0.1,5],k:[10,0,100],c:[0.5,0,15]}, x0:[1], v0:[0], T:10, anim:"h"},
- {en:"1 DOF · Harmonic forcing & resonance", name:"1자유도 · 조화가진과 공진", eq:"x'' = (F0*cos(w*t) - c*x' - k*x)/m", p:{m:[1,0.1,5],k:[10,0,100],c:[0.4,0,10],F0:[1,0,5],w:[3.16,0,10]}, x0:[0], v0:[0], T:40, anim:"h"},
- {en:"1 DOF · Beats", name:"1자유도 · 맥놀이 (beat)", eq:"x'' = (F0*cos(w*t) - k*x)/m", p:{m:[1,0.1,5],k:[10,0,100],F0:[1,0,5],w:[2.9,0,10]}, x0:[0], v0:[0], T:60, anim:"h"},
+ {en:"1 DOF · Harmonic forcing & resonance", name:"1자유도 · 조화가진과 공진", eq:()=>"F  = F0*cos(w*t)       # "+L("가진력","forcing")+"\nx'' = (F - c*x' - k*x)/m", p:{m:[1,0.1,5],k:[39.48,0,160],c:[1.257,0,13],F0:[3.948,0,10],w:[6.283,0,20]}, x0:[0], v0:[0], T:20, anim:"h"},
+ {en:"1 DOF · Beats", name:"1자유도 · 맥놀이 (beat)", eq:()=>"F  = F0*cos(w*t)       # "+L("가진력","forcing")+"\nx'' = (F - k*x)/m", p:{m:[1,0.1,5],k:[39.48,0,160],F0:[3.948,0,10],w:[5.655,0,20]}, x0:[0], v0:[0], T:30, anim:"h"},
  {en:"1 DOF · Base excitation", name:"1자유도 · 기초가진", eq:()=>"y  = Y*sin(w*t)       # "+L("기초 변위","base displacement")+"\nyd = Y*w*cos(w*t)     # "+L("기초 속도","base velocity")+"\nx'' = (-c*(x' - yd) - k*(x - y))/m", p:{m:[1,0.1,5],k:[10,0,100],c:[0.5,0,10],Y:[0.2,0,1],w:[3,0,10]}, x0:[0], v0:[0], T:30, anim:"h"},
- {en:"1 DOF · Rotating unbalance", name:"1자유도 · 회전 불평형", eq:"x'' = (me*e0*w^2*sin(w*t) - c*x' - k*x)/m", p:{m:[1,0.1,5],k:[10,0,100],c:[0.6,0,10],me:[0.1,0,1],e0:[1,0,2],w:[3,0,10]}, x0:[0], v0:[0], T:40, anim:"h"},
+ {en:"1 DOF · Rotating unbalance", name:"1자유도 · 회전 불평형", eq:()=>"F  = me*e0*w^2*sin(w*t)   # "+L("불평형력","unbalance force")+"\nx'' = (F - c*x' - k*x)/m", p:{m:[1,0.1,5],k:[10,0,100],c:[0.6,0,10],me:[0.1,0,1],e0:[1,0,2],w:[3,0,10]}, x0:[0], v0:[0], T:40, anim:"h"},
  {en:"Nonlinear · Large-amplitude pendulum", name:"비선형 · 대진폭 진자", eq:"x'' = -(g/L)*sin(x) - c*x'", p:{g:[9.81,0,20],L:[1,0.1,3],c:[0.1,0,2]}, x0:[2.5], v0:[0], T:20, anim:"p"},
  {en:"Nonlinear · Duffing oscillator", name:"비선형 · Duffing 진동자", eq:"x'' = -d*x' - a*x - b*x^3 + F*cos(w*t)", p:{d:[0.2,0,1],a:[-1,-2,2],b:[1,0,3],F:[0.3,0,1],w:[1.2,0,3]}, x0:[1], v0:[0], T:150, anim:"h"},
  {en:"Nonlinear · Coulomb friction", name:"비선형 · 쿨롱 마찰", eq:"x'' = -(k/m)*x - mu*g*sign(x')", p:{m:[1,0.1,5],k:[10,0,100],mu:[0.1,0,0.5],g:[9.81,0,20]}, x0:[1], v0:[0], T:8, anim:"h"},
  {en:"2 DOF · Free vibration (mode coupling)", name:"2자유도 · 자유진동 (모드 연성)", eq:"x1'' = (-k1*x1 - k2*(x1 - x2))/m1\nx2'' = (-k2*(x2 - x1))/m2", p:{m1:[1,0.1,5],m2:[1,0.1,5],k1:[10,0,50],k2:[10,0,50]}, x0:[1,0], v0:[0,0], T:30, anim:"h"},
- {en:"2 DOF · Tuned mass damper", name:"2자유도 · 동흡진기 (TMD)", eq:"x1'' = (F0*cos(w*t) - k1*x1 - k2*(x1 - x2) - c2*(x1' - x2'))/m1\nx2'' = (-k2*(x2 - x1) - c2*(x2' - x1'))/m2", p:{m1:[1,0.1,5],k1:[10,0,50],m2:[0.1,0.01,1],k2:[1,0,10],c2:[0.02,0,1],F0:[1,0,5],w:[3.162,0,8]}, x0:[0,0], v0:[0,0], T:60, anim:"h"},
+ {en:"2 DOF · Tuned mass damper", name:"2자유도 · 동흡진기 (TMD)", eq:()=>"F  = F0*cos(w*t)\nx1'' = (F - k1*x1 - k2*(x1 - x2) - c2*(x1' - x2'))/m1\nx2'' = (-k2*(x2 - x1) - c2*(x2' - x1'))/m2", p:{m1:[1,0.1,5],k1:[10,0,50],m2:[0.1,0.01,1],k2:[1,0,10],c2:[0.02,0,1],F0:[1,0,5],w:[3.162,0,8]}, x0:[0,0], v0:[0,0], T:60, anim:"h"},
  {en:"2 DOF · Double pendulum (small angle)", name:"2자유도 · 이중 진자 (소진폭)", eq:"x1'' = (g/L)*(-2*x1 + x2)\nx2'' = (g/L)*(2*x1 - 2*x2)", p:{g:[9.81,0,20],L:[1,0.2,3]}, x0:[0.15,0], v0:[0,0], T:20, anim:"p"},
  {en:"3 DOF · Spring–mass chain", name:"3자유도 · 스프링-질량 체인", eq:"x1'' = (-k*x1 - k*(x1 - x2) - c*x1')/m\nx2'' = (-k*(x2 - x1) - k*(x2 - x3) - c*x2')/m\nx3'' = (-k*(x3 - x2) - c*x3')/m", p:{m:[1,0.1,5],k:[10,0,50],c:[0.05,0,2]}, x0:[0,0,1], v0:[0,0,0], T:40, anim:"h"},
  {en:"3 DOF · 3-story building, ground motion", name:"3자유도 · 3층 건물 지진 응답", eq:"y  = Y*sin(w*t)\nyd = Y*w*cos(w*t)\nx1'' = (-k*(x1 - y) - c*(x1' - yd) - k*(x1 - x2) - c*(x1' - x2'))/m\nx2'' = (-k*(x2 - x1) - c*(x2' - x1') - k*(x2 - x3) - c*(x2' - x3'))/m\nx3'' = (-k*(x3 - x2) - c*(x3' - x2'))/m", p:{m:[1,0.1,5],k:[100,0,300],c:[0.3,0,5],Y:[0.05,0,0.3],w:[4.45,0,30]}, x0:[0,0,0], v0:[0,0,0], T:40, anim:"v"},
@@ -342,7 +343,10 @@ function parseSystem(text){
   const f = new Function("H","Math",`return function(t,X,P,D){\n${body}${acc}}`)(H,Math);
   const yIdx = defNames.indexOf("y");
   const yf = yIdx>=0 ? new Function("H","Math",`return function(t,X,P){\n${body}return d${yIdx};}`)(H,Math) : null;
-  return {n,f,yf,params,eqs,defs};
+  // helper definitions named F, F1..F3, u, u1..u3 are treated as inputs and drawn with the time response
+  const inputs = defNames.map((nm,j)=>({nm,j})).filter(o=>/^(F|u)[1-3]?$/.test(o.nm)).slice(0,3);
+  const inf = inputs.length ? new Function("H","Math",`return function(t,X,P){\n${body}return [${inputs.map(o=>"d"+o.j).join(",")}];}`)(H,Math) : null;
+  return {n,f,yf,inf,inputs:inputs.map(o=>o.nm),params,eqs,defs};
 }
 
 /* ---------------- numerics ---------------- */
@@ -447,10 +451,11 @@ function simulate(sys,P,x0,v0,T,wmax){
   const dt=T/steps;
   const t=new Float64Array(M+1), X=[],V=[]; for(let i=0;i<n;i++){X.push(new Float64Array(M+1));V.push(new Float64Array(M+1));}
   const Y=sys.yf?new Float64Array(M+1):null;
+  const U=sys.inf?sys.inputs.map(()=>new Float64Array(M+1)):null;
   const s=new Float64Array(N),k1=new Float64Array(N),k2=new Float64Array(N),k3=new Float64Array(N),k4=new Float64Array(N),tmp=new Float64Array(N);
   for(let i=0;i<n;i++){s[i]=x0[i]||0;s[n+i]=v0[i]||0;}
   let last=M, blown=false;
-  const rec=(j,tt)=>{t[j]=tt;for(let i=0;i<n;i++){X[i][j]=s[i];V[i][j]=s[n+i];} if(Y) Y[j]=sys.yf(tt,s,P);};
+  const rec=(j,tt)=>{t[j]=tt;for(let i=0;i<n;i++){X[i][j]=s[i];V[i][j]=s[n+i];} if(Y) Y[j]=sys.yf(tt,s,P); if(U){const uv=sys.inf(tt,s,P); for(let i=0;i<U.length;i++) U[i][j]=uv[i];}};
   rec(0,0);
   let tt=0;
   outer: for(let j=1;j<=M;j++){
@@ -468,7 +473,7 @@ function simulate(sys,P,x0,v0,T,wmax){
     for(let i=0;i<N;i++) if(!isFinite(s[i])||Math.abs(s[i])>1e9){ blown=true; last=j-1; break outer; }
     rec(j,tt);
   }
-  return {n,t,X,V,Y,M:last,T:t[last],dt,steps,blown};
+  return {n,t,X,V,Y,U,uNames:sys.inputs||[],M:last,T:t[last],dt,steps,blown};
 }
 function fft(re,im){
   const n=re.length;
@@ -486,7 +491,7 @@ function fft(re,im){
 /* ---------------- state ---------------- */
 const S = {
   sys:null, P:[], pv:{}, prange:{}, x0:[1,0,0], v0:[0,0,0], T:10, anim:"h",
-  sim:null, lin:null, modes:[], time:0, playing:true, speed:1, tab:"time", showV:false, frfIn:0, gain:0,
+  sim:null, lin:null, modes:[], time:0, playing:true, speed:1, tab:"time", showV:false, showU:true, frfIn:0, gain:0,
   dirty:true, lastText:"", get lang(){return LANG;}
 };
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -684,7 +689,9 @@ function buildLegend(){
   if(S.tab==="time"){
     for(let i=0;i<n;i++) h+=`<span><i style="background:${C[i]}"></i>${nm(i)}(t)</span>`;
     if(S.sim&&S.sim.Y) h+=`<span><i style="background:${css("--base")}"></i>y(t) ${L("기초","base")}</span>`;
+    if(S.sim&&S.sim.U&&S.sim.U.length) h+=`<span><i style="background:${css("--inp")}"></i>${S.sim.uNames.join(", ")} ${L("(가진 입력, 오른쪽 축)","(input, right axis)")}</span>`;
     h+=`<label><input type="checkbox" id="showV" ${S.showV?"checked":""}> ${L("속도도 표시 (점선)","show velocity (dashed)")}</label>`;
+    if(S.sim&&S.sim.U&&S.sim.U.length) h+=`<label><input type="checkbox" id="showU" ${S.showU?"checked":""}> ${L("입력 표시","show input")}</label>`;
   } else if(S.tab==="phase"){
     for(let i=0;i<n;i++) h+=`<span><i style="background:${C[i]}"></i>${nm(i)} – ${nm(i)}'</span>`;
     h+=`<span class="muted">${L("전체 궤적과 현재 상태(점)","full trajectory and current state (dot)")}</span>`;
@@ -698,6 +705,7 @@ function buildLegend(){
   }
   LG.innerHTML=h;
   const sv=$("#showV"); if(sv) sv.onchange=()=>{S.showV=sv.checked;};
+  const su=$("#showU"); if(su) su.onchange=()=>{S.showU=su.checked;};
   const fi=$("#frfIn"); if(fi) fi.onchange=()=>{S.frfIn=+fi.value;};
 }
 
@@ -749,12 +757,39 @@ function drawPlot(){
   const C=SC(), n=s.n;
   const box={x:62,y:12,w:Math.max(50,W-78),h:Hh-54};
   if(S.tab==="time"){
+    const hasU=!!(s.U&&s.U.length&&S.showU);
+    if(hasU) box.w=Math.max(50,box.w-46);
     let lo=Infinity,hi=-Infinity;
     const series=[]; for(let i=0;i<n;i++){series.push([s.X[i],C[i],2,null]); if(S.showV) series.push([s.V[i],C[i],1.4,[5,4]]);}
     if(s.Y) series.push([s.Y,css("--base"),1.5,[2,3]]);
     for(const [a] of series) for(let j=0;j<=s.M;j++){lo=Math.min(lo,a[j]);hi=Math.max(hi,a[j]);}
     const pad=(hi-lo)*0.08||1; const [X,Y]=axes(ctx,box,[0,s.T],[lo-pad,hi+pad],"t [s]",S.showV?"x, x'":"x");
     const ci=idxAt(S.time);
+    if(hasU){
+      let ul=Infinity,uh=-Infinity;
+      for(const a of s.U) for(let j=0;j<=s.M;j++){ul=Math.min(ul,a[j]);uh=Math.max(uh,a[j]);}
+      const up=(uh-ul)*0.08||1; ul-=up; uh+=up;
+      const Y2=v=>box.y+box.h-(v-ul)/(uh-ul)*box.h;
+      const ic=css("--inp");
+      // right-hand scale
+      ctx.strokeStyle=ic; ctx.globalAlpha=.55; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(box.x+box.w,box.y); ctx.lineTo(box.x+box.w,box.y+box.h); ctx.stroke(); ctx.globalAlpha=1;
+      ctx.fillStyle=ic; ctx.textAlign="left"; ctx.textBaseline="middle";
+      ctx.font="12px "+css("--mono").split(",")[0]+", monospace";
+      for(const v of niceTicks(ul,uh,Math.max(3,Math.floor(box.h/48)))){
+        const py=Y2(v); if(py<box.y-1||py>box.y+box.h+1) continue;
+        ctx.beginPath(); ctx.moveTo(box.x+box.w,py); ctx.lineTo(box.x+box.w+4,py); ctx.strokeStyle=ic; ctx.stroke();
+        ctx.fillText(fmtTick(v),box.x+box.w+7,py);
+      }
+      ctx.textAlign="right"; ctx.textBaseline="top"; ctx.fillText(s.uNames.join(", "),box.x+box.w-6,box.y+4);
+      if(ul<0&&uh>0){ ctx.strokeStyle=ic; ctx.globalAlpha=.2; ctx.setLineDash([3,4]); ctx.beginPath(); ctx.moveTo(box.x,Y2(0)); ctx.lineTo(box.x+box.w,Y2(0)); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1; }
+      s.U.forEach((a,i)=>{
+        const dash=i===0?[6,3]:(i===1?[2,3]:[9,3,2,3]);
+        ctx.globalAlpha=.35; poly(ctx,s.t,a,X,Y2,ci,s.M,ic,1.6,dash);
+        ctx.globalAlpha=.95; poly(ctx,s.t,a,X,Y2,0,ci,ic,1.6,dash); ctx.globalAlpha=1;
+        dot(ctx,X(S.time),Y2(sampleAt(a,S.time)),ic);
+      });
+    }
     for(const [a,col,wd,dash] of series){ ctx.globalAlpha=.28; poly(ctx,s.t,a,X,Y,ci,s.M,col,wd,dash); ctx.globalAlpha=1; poly(ctx,s.t,a,X,Y,0,ci,col,wd,dash); }
     const px=X(S.time); ctx.strokeStyle=css("--ink"); ctx.globalAlpha=.5; ctx.beginPath(); ctx.moveTo(px,box.y); ctx.lineTo(px,box.y+box.h); ctx.stroke(); ctx.globalAlpha=1;
     for(let i=0;i<n;i++){ dot(ctx,px,Y(sampleAt(s.X[i],S.time)),C[i]); }
